@@ -1,16 +1,17 @@
 // ApplyLeaveScreen.js
-import React, { useCallback, useState } from 'react';
-import { View, Text, Button, TextInput, Alert } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, Text, Button, TextInput, Alert, StyleSheet } from 'react-native';
 // import DatePicker from 'react-native-date-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { applyForLeave } from '../../redux/slices/userSlice';
-import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay} from 'date-fns';
+import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay, isSameDay} from 'date-fns';
 import Calender from '../../assets/images/date_input.png';
 import DropDownIcon from '../../assets/images/DropDownIcon.png'
 import InputFields from '../../sharedComponents/InputFields';
 import { useFocusEffect } from '@react-navigation/native';
 import TypeModal from '../../sharedComponents/TypeModal';
+import { formatDate, hasExistingWFHThisMonth } from '../../appHooks/appHook';
 
 const ApplyLeave = ({navigation}) => {
     const dispatch = useDispatch();
@@ -29,6 +30,7 @@ const ApplyLeave = ({navigation}) => {
     const totalLeaves = currentUser?.totalLeaves || 12;
 
     const remainingLeaves = currentUser?.remainingLeaves || 12;
+    const typeOptions = ['WFH', 'Personal Leave', 'Sick Leave', 'On Site'];
 
     useFocusEffect(
         useCallback(()=>{
@@ -36,13 +38,19 @@ const ApplyLeave = ({navigation}) => {
         },[navigation])
     )
 
-    const formatDate = date => {
-        if (!date) return '';
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}/${month}/${year}`;
-    };
+
+    useEffect(() => {
+        if(type){
+            if (type === 'WFH' && startDate && endDate) {
+                if (!isSameDay(startDate, endDate)) {
+                  setEndDate(startDate);
+                }
+                
+            }
+            validateEndDate(startDate);
+        }
+      }, [type]);
+
 
     const validateStartDate = (date) => {
         let errorMessage = null;
@@ -75,6 +83,14 @@ const ApplyLeave = ({navigation}) => {
             console.log('1');
             
             errorMessage = 'End date cannot be before start date';
+          }
+          else if (type === 'WFH') {
+            if (differenceInDays(date, startDate) !== 0) {
+              errorMessage = 'WFH must be for a single day';
+            }
+            if (hasExistingWFHThisMonth(currentUser)) {
+              errorMessage = 'WFH already applied this month';
+            }
           }
           
           else if (
@@ -118,7 +134,7 @@ const ApplyLeave = ({navigation}) => {
     }
 
     const handleTypeCancel = () => {
-        const errorMessage = !type.trim() ? 'Leave type is required' : null;
+        const errorMessage = !type?.trim() ? 'Leave type is required' : null;
         setError(prev => ({ ...prev, type: errorMessage }));
         setTypeVisible(false);
         return !errorMessage;
@@ -129,11 +145,15 @@ const ApplyLeave = ({navigation}) => {
         if (type === 'start') {
             setEndDate(null);
             setStartDate(date);
+            if (type === 'WFH') {
+                setEndDate(date);
+              }
             validateStartDate(date);
             setShowStartPicker(false)
         } else {
-            setEndDate(date);
-            validateEndDate(date);
+            const finalDate = type === 'WFH' ? startDate : date;
+            setEndDate(finalDate);
+            validateEndDate(finalDate);
             setShowEndPicker(false);
         }
     };
@@ -158,6 +178,7 @@ const ApplyLeave = ({navigation}) => {
           validateEndDate(endDate),
           handleTypeCancel(),
           validateReason(),
+          type === 'WFH' && !isWeekend(startDate),
         ];
         return validations.every(v => v);
     };
@@ -191,6 +212,7 @@ const ApplyLeave = ({navigation}) => {
 
   return (
     <View style={{ padding: 20 }}>
+        <Text style={styles.title}>Apply Leave</Text>
       <Text style={{ fontSize: 18, marginBottom: 20 }}>
         Remaining Leaves: {remainingLeaves}/{totalLeaves}
       </Text>
@@ -267,10 +289,10 @@ const ApplyLeave = ({navigation}) => {
 
         <TypeModal
             modalVisible = {typeVisible}
-            setModalVisible = {setTypeVisible} 
-            setType = {setType}
+            setModalVisible = {setTypeVisible}
             handleSelect = {handleTypeSelect}
             handleCancel = {handleTypeCancel}
+            options = {typeOptions}
         />
 
         <Button
@@ -283,3 +305,13 @@ const ApplyLeave = ({navigation}) => {
 };
 
 export default ApplyLeave;
+
+const styles = StyleSheet.create({
+    title: {
+        fontSize: 24,
+        fontWeight: '600',
+        color: '#2d3436',
+        marginBottom: 20,
+        textAlign: 'center',
+      },
+});

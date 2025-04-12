@@ -1,30 +1,25 @@
-const useLeaveUtils = () => {
-    const formatDate = (dateString) => {
-      try {
-        return format(parseISO(dateString), 'dd MMM, yyyy');
-      } catch {
-        return 'Invalid date';
-      }
-    };
+import { parseISO} from 'date-fns';
+
+
+const isSameMonth = (date1, date2) => {
+    return date1.getFullYear() === date2.getFullYear() && 
+           date1.getMonth() === date2.getMonth();
+};
   
-    const calculateDuration = (start, end) => {
-      const startDate = parseISO(start);
-      const endDate = parseISO(end);
-      const totalDays = differenceInDays(endDate, startDate) + 1;
-      const weekdays = eachDayOfInterval({ start: startDate, end: endDate })
-                        .filter(d => !isWeekend(d)).length;
-      return { totalDays, weekdays };
-    };
-  
-    const getStatusStyle = (status) => {
-      switch(status.toLowerCase()) {
-        case 'approved': return styles.approvedStatus;
-        case 'pending': return styles.pendingStatus;
-        case 'rejected': return styles.rejectedStatus;
-        default: return styles.pendingStatus;
-      }
-    };
-  
-    return { formatDate, calculateDuration, getStatusStyle };
-  };
+export const hasExistingWFHThisMonth = (currentUser) => {
+    if (!currentUser) return false;
+    const currentDate = new Date();
+    return currentUser.leaveApplied.some(leave => 
+      leave.type === 'WFH' && 
+      isSameMonth(parseISO(leave.startDate), currentDate)
+    );
+};
+
+export const formatDate = date => {
+    if (!date) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+};
   

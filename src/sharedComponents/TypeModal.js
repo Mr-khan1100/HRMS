@@ -2,14 +2,10 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 
 
-const LeaveTypes = ['WFH', 'Personal Leave', 'Sick Leave', 'On Site'];
+// const LeaveTypes = ['WFH', 'Personal Leave', 'Sick Leave', 'On Site'];
 
-const TypeModal = ({ modalVisible, setModalVisible, handleSelect, handleCancel}) => {
+const TypeModal = ({ modalVisible, setModalVisible, handleSelect, handleCancel, options}) => {
 
-//   const handleSelect = (item) => {
-//     setType(item);
-//     setModalVisible(false);
-//   };
 
   return (
     <Modal
@@ -22,7 +18,7 @@ const TypeModal = ({ modalVisible, setModalVisible, handleSelect, handleCancel})
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>{'Select Leave Type'}</Text>
             {
-                LeaveTypes.map((status, index) => (
+                options.map((status, index) => (
                     <TouchableOpacity 
                     key={index} 
                     style={styles.option} 

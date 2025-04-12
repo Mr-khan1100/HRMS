@@ -58,7 +58,7 @@ const SignInScreen = ({navigation}) => {
         newErrors.email = 'Email is required';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
         newErrors.email = 'Invalid email format';
-      }else if (!emailValue.startsWith('User_') || !emailValue.startsWith('Manager_')) {
+      }else if (!emailValue.startsWith('User_') && !emailValue.startsWith('Manager_')) {
         newErrors.email = 'Email must start with either User_ or Manager_';
       } else {
         delete newErrors.email;

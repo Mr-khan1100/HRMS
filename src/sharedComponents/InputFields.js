@@ -17,11 +17,12 @@ const InputFields = ({
     secureTextEntry,
     keyboardType,
     maxLength,
+    style,
   }) => {
   return (
-    <View style={styles.inputContainer}>
+    <View style={[styles.inputContainer, style]}>
           <Text style={styles.label}>{label}</Text>
-          <View style={styles.inputRow}>
+          <View style={[styles.inputRow]}>
             <TextInput
               style={[styles.input, error && styles.errorInput]}
               value={value}
