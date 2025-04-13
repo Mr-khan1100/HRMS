@@ -9,8 +9,8 @@ import { formatDate, statusOptions, typeOptions } from '@appHooks/appHook';
 import { COLORS } from '@styles/theme';
 import { generalConst, labelConstants, placeholder } from '@constants/appConstant';
 
-const LeaveFilter = ({ onFilterChange, initialFilters }) => {
-  const [filters, setFilters] = useState(initialFilters || {});
+const LeaveFilter = ({ onFilterChange, style }) => {
+  const [filters, setFilters] = useState({});
   const [showFromDate, setShowFromDate] = useState(false);
   const [showToDate, setShowToDate] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
@@ -35,7 +35,7 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.filterRow}>
         <InputFields
           label={labelConstants.FROM}
@@ -127,6 +127,7 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
+    // backgroundColor:COLORS.background,
   },
   filterRow: {
     flexDirection: 'row',

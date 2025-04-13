@@ -202,7 +202,7 @@ const ApplyLeave = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-        <Text style={styles.title}>{labelConstants.APPLY_LEAVE_LABEL}</Text>
+        <Text style={styles.title}>{screenLabel.APPLY_LEAVE_LABEL}</Text>
         <Text style={styles.remainingTexr}>
             Remaining Leaves: {remainingLeaves}/{totalLeaves}
         </Text>
