@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import LeaveCard from '@sharedComponents/LeaveCard';
 import LeaveFilter from '@sharedComponents/LeaveFilter';
 import DropDownIcon from '@assets/images/DropDownIcon.png';
-import { parseISO } from 'date-fns';
+import { parseISO, startOfDay } from 'date-fns';
 import { COLORS } from '@styles/theme';
 import { screenLabel } from '@constants/appConstant';
 
@@ -15,21 +15,25 @@ const LeaveHistory = () => {
     const animation = useState(new Animated.Value(0))[0];
     const rotation = useState(new Animated.Value(0))[0];
     const leaves = currentUser?.leaveApplied || [];
-
+    
     const filteredLeaves = leaves.filter(leave => {
         const leaveStart = parseISO(leave.startDate);
         const leaveEnd = parseISO(leave.endDate);
+        const normalizedLeaveStart = startOfDay(leaveStart);
+        const normalizedLeaveEnd = startOfDay(leaveEnd);
+        const normalizedFrom = filters.fromDate ? startOfDay(filters.fromDate) : null;
+        const normalizedTo = filters.toDate ? startOfDay(filters.toDate) : null;
         
         let matchesDates = true;
-        
-        if (filters.fromDate && filters.toDate) {
-          matchesDates = leaveStart >= filters.fromDate && 
-                         leaveEnd <= filters.toDate;
-        } else if (filters.fromDate) {
-          matchesDates = leaveStart >= filters.fromDate;
-        } else if (filters.toDate) {
-          matchesDates = leaveEnd <= filters.toDate;
-        }
+
+        if (normalizedFrom && normalizedTo) {
+            matchesDates = normalizedLeaveStart >= normalizedFrom && 
+                           normalizedLeaveEnd <= normalizedTo;
+          } else if (normalizedFrom) {
+            matchesDates = normalizedLeaveStart >= normalizedFrom;
+          } else if (normalizedTo) {
+            matchesDates = normalizedLeaveEnd <= normalizedTo;
+          }
         const matchesStatus = !filters.status || leave.status === filters.status;
         const matchesType = !filters.type || leave.type === filters.type;
       
