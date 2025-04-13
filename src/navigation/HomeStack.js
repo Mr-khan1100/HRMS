@@ -2,14 +2,20 @@ import { View, Text, StyleSheet, Image } from 'react-native'
 import React from 'react'
 import {createStackNavigator} from '@react-navigation/stack';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import { useTabBar } from '../contexts/TabBarContext';
-import ProfileScreen from '../screens/homeScreens/ProfileScreen'
-import { COLORS } from '../styles/theme';
-import LeaveHistory from '../screens/homeScreens/LeaveHistory';
-import ApplyLeave from '../screens/homeScreens/ApplyLeave';
+import ProfileScreen from '@screens/homeScreens/ProfileScreen'
+import LeaveHistory from '@screens/homeScreens/LeaveHistory';
+import ApplyLeave from '@screens/homeScreens/ApplyLeave';
 import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../redux/slices/userSlice';
-import ApproveLeave from '../screens/homeScreens/ApproveLeave';
+import { selectCurrentUser } from '@redux/slices/userSlice';
+import ApproveLeave from '@screens/homeScreens/ApproveLeave';
+import { COLORS } from '@styles/theme';
+import activeHome from '@assets/images/Home-active.jpg';
+import inactiveHome from '@assets/images/Home-inactive.jpg';
+import activeLeave from '@assets/images/leave-active.png';
+import inactiveLeave from '@assets/images/leave-inactive.png';
+import activeHistory from '@assets/images/leave-history-active.jpg';
+import inactiveHistory from '@assets/images/leave-history-inactive.jpg';
+import { screenLabel } from '@constants/appConstant';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -21,7 +27,7 @@ const ProfileStack = () => {
         animationEnabled: false,
         }}>
         <Stack.Screen
-        name="ProfileScreen"
+        name={screenLabel.PROFILE_SCREEN}
         component={ProfileScreen}
         options={{headerShown: false}}
         />
@@ -36,7 +42,7 @@ const LeaveHistoryStack = () => {
         animationEnabled: false,
         }}>
         <Stack.Screen
-        name="LeaveHistory"
+        name={screenLabel.LEAVE_HISTORY}
         component={LeaveHistory}
         options={{headerShown: false}}
         />
@@ -51,7 +57,7 @@ const ApplyLeaveStack = () => {
         animationEnabled: false,
         }}>
         <Stack.Screen
-        name="ApplyLeave"
+        name={screenLabel.APPLY_LEAVE}
         component={ApplyLeave}
         options={{headerShown: false}}
         />
@@ -66,7 +72,7 @@ const ApproveLeaveStack = () => {
         animationEnabled: false,
         }}>
         <Stack.Screen
-        name="ApproveLeave"
+        name={screenLabel.APPROVE_LEAVE}
         component={ApproveLeave}
         options={{headerShown: false}}
         />
@@ -75,33 +81,24 @@ const ApproveLeaveStack = () => {
 }
 
 const HomeStack = () => {
-    // const {isTabBarVisible} = useTabBar();
     const currentUser = useSelector(selectCurrentUser);
-
 
   return (
     <View style={styles.container}>
       <Tab.Navigator
-        // ref={tabNavigatorRef}
-        screenOptions={{
-          tabBarStyle: {
-            height: 60,
-            paddingBottom: 5,
-            display:  'flex',
-          },
-        }}
-        initialRouteName="Profile">
+        screenOptions={styles.tabBarStyle}
+        initialRouteName={screenLabel.PROFILE}>
         <Tab.Screen
-          name="Profile"
+          name={screenLabel.PROFILE}
           component={ProfileStack}
           options={{
             tabBarLabel: ({focused}) => (
               <Text
                 style={{
-                  color: focused ? '#0076BD' : '#4E4E4E',
+                  color: focused ? COLORS.darkBlack : COLORS.grey,
                   fontSize: 10,
                 }}>
-                Profile
+                {screenLabel.PROFILE}
               </Text>
             ),
             headerShown: false,
@@ -109,26 +106,26 @@ const HomeStack = () => {
                 <Image
                 source={
                   focused
-                    ? require('../assets/images/Home-active.jpg')
-                    : require('../assets/images/Home-inactive.jpg')
+                    ? activeHome
+                    : inactiveHome
                 }
                 style={styles.logo}
-                resizeMode="contain"
+                
               />
             ),
           }}
         />
        {currentUser?.role === 'manager' && <Tab.Screen
-          name="Approve Leave"
+          name={screenLabel.APPROVE_LEAVE_LABEL}
           component={ApproveLeaveStack}
           options={{
             tabBarLabel: ({focused}) => (
               <Text
                 style={{
-                  color: focused ? '#0076BD' : '#4E4E4E',
-                  fontSize: 10,
+                    color: focused ? COLORS.darkBlack : COLORS.grey,
+                    fontSize: 10,
                 }}>
-                Approve History
+                {screenLabel.APPROVE_LEAVE_LABEL}
               </Text>
             ),
             headerShown: false,
@@ -136,26 +133,25 @@ const HomeStack = () => {
                 <Image
                 source={
                   focused
-                    ? require('../assets/images/leave-active.png')
-                    : require('../assets/images/leave-inactive.png')
+                    ? activeLeave
+                    : inactiveLeave
                 }
                 style={styles.logo}
-                resizeMode="contain"
               />
             ),
           }}
         />}
         <Tab.Screen
-          name="Leave History"
+          name={screenLabel.LEAVE_HISTORY_LABEL}
           component={LeaveHistoryStack}
           options={{
             tabBarLabel: ({focused}) => (
               <Text
                 style={{
-                  color: focused ? '#0076BD' : '#4E4E4E',
-                  fontSize: 10,
+                    color: focused ? COLORS.darkBlack : COLORS.grey,
+                    fontSize: 10,
                 }}>
-                Leave History
+                {screenLabel.LEAVE_HISTORY_LABEL}
               </Text>
             ),
             headerShown: false,
@@ -163,26 +159,25 @@ const HomeStack = () => {
                 <Image
                 source={
                   focused
-                    ? require('../assets/images/leave-history-active.jpg')
-                    : require('../assets/images/leave-history-inactive.jpg')
+                    ? activeHistory
+                    : inactiveHistory
                 }
                 style={styles.logo}
-                resizeMode="contain"
               />
             ),
           }}
         />
         <Tab.Screen
-          name="Apply Leave"
+          name={screenLabel.APPLY_LEAVE_LABEL}
           component={ApplyLeaveStack}
           options={{
             tabBarLabel: ({focused}) => (
               <Text
                 style={{
-                  color: focused ? '#0076BD' : '#4E4E4E',
-                  fontSize: 10,
+                    color: focused ? COLORS.darkBlack : COLORS.grey,
+                    fontSize: 10,
                 }}>
-                Apply Leave
+                {screenLabel.APPLY_LEAVE_LABEL}
               </Text>
             ),
             headerShown: false,
@@ -190,11 +185,10 @@ const HomeStack = () => {
                 <Image
                 source={
                   focused
-                    ? require('../assets/images/leave-active.png')
-                    : require('../assets/images/leave-inactive.png')
+                    ? activeLeave
+                    : inactiveLeave
                 }
                 style={styles.logo}
-                resizeMode="contain"
               />
             ),
           }}
@@ -207,13 +201,17 @@ const HomeStack = () => {
 export default HomeStack
 
 const styles = StyleSheet.create({
-
     container: {
       flex: 1,
+    },
+    tabBarStyle: {
+        height: 60,
+        paddingBottom: 5,
+        display:  'flex',
     },
     logo:{
         width: 24, 
         height: 24,
-        // tintColor: COLORS.background
+        resizeMode : "contain",
     }
   });

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useSelector } from 'react-redux';
-import LeaveCard from '../../sharedComponents/LeaveCard';
-import LeaveFilter from '../../sharedComponents/LeaveFilter';
+import LeaveCard from '@sharedComponents/LeaveCard';
+import LeaveFilter from '@sharedComponents/LeaveFilter';
 import { parseISO } from 'date-fns';
+import { COLORS } from '@styles/theme';
 
 const LeaveHistory = () => {
     const currentUser = useSelector(state => state.users.currentUser);
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
     title: {
       fontSize: 24,
       fontWeight: '600',
-      color: '#2d3436',
+      color: COLORS.headerLabel,
       marginBottom: 20,
       textAlign: 'center',
     },
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#636e72',
+        color: COLORS.emptyText,
     },
     separator: {
         height: 16,

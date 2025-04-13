@@ -3,10 +3,11 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import InputFields from './InputFields';
 import TypeModal from './TypeModal';
-import Calender from '../assets/images/date_input.png';
-import DropDownIcon from '../assets/images/DropDownIcon.png';
-import { format } from 'date-fns';
-import { formatDate } from '../appHooks/appHook';
+import Calender from '@assets/images/date_input.png';
+import DropDownIcon from '@assets/images/DropDownIcon.png';
+import { formatDate, statusOptions, typeOptions } from '@appHooks/appHook';
+import { COLORS } from '@styles/theme';
+import { generalConst, labelConstants, placeholder } from '@constants/appConstant';
 
 const LeaveFilter = ({ onFilterChange, initialFilters }) => {
   const [filters, setFilters] = useState(initialFilters || {});
@@ -14,9 +15,6 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
   const [showToDate, setShowToDate] = useState(false);
   const [showStatus, setShowStatus] = useState(false);
   const [showType, setShowType] = useState(false);
-
-  const statusOptions = ['pending', 'approved', 'rejected'];
-  const typeOptions = ['WFH', 'Personal Leave', 'Sick Leave', 'On Site'];
 
   const handleDateChange = (type, date) => {
     const newFilters = { ...filters, [type]: date };
@@ -40,44 +38,44 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
     <View style={styles.container}>
       <View style={styles.filterRow}>
         <InputFields
-          label="From"
+          label={labelConstants.FROM}
           value={filters.fromDate ? formatDate(filters.fromDate) : ''}
           onIconPress={() => setShowFromDate(true)}
           iconSource={Calender}
           editable={false}
-          placeholder="Select date"
+          placeholder={placeholder.SELECT_START_DATE}
           style={styles.filterInput}
         />
 
         <InputFields
-          label="To"
+          label={labelConstants.TO}
           value={filters.toDate ? formatDate(filters.toDate) : ''}
           onIconPress={() => setShowToDate(true)}
           iconSource={Calender}
           editable={false}
-          placeholder="Select date"
+          placeholder={placeholder.SELECT_END_DATE}
           style={styles.filterInput}
         />
       </View>
 
       <View style={styles.filterRow}>
         <InputFields
-          label="Status"
+          label={labelConstants.STATUS}
           value={filters.status || ''}
           onIconPress={() => setShowStatus(true)}
           iconSource={DropDownIcon}
           editable={false}
-          placeholder="Select status"
+          placeholder={placeholder.SELECT_STATUS}
           style={styles.filterInput}
         />
 
         <InputFields
-          label="Type"
+          label={labelConstants.TYPE}
           value={filters.type || ''}
           onIconPress={() => setShowType(true)}
           iconSource={DropDownIcon}
           editable={false}
-          placeholder="Select type"
+          placeholder={placeholder.SELECT_LEAVE_TYPE}
           style={styles.filterInput}
         />
       </View>
@@ -88,9 +86,9 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
 
       <DateTimePickerModal
         isVisible={showFromDate}
-        mode="date"
+        mode={generalConst.DATE}
         onConfirm={date => {
-          handleDateChange('fromDate', date);
+          handleDateChange(generalConst.FROM_DATE, date);
           setShowFromDate(false);
         }}
         onCancel={() => setShowFromDate(false)}
@@ -98,9 +96,9 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
 
       <DateTimePickerModal
         isVisible={showToDate}
-        mode="date"
+        mode={generalConst.DATE}
         onConfirm={date => {
-          handleDateChange('toDate', date);
+          handleDateChange(generalConst.TO_DATE, date);
           setShowToDate(false);
         }}
         onCancel={() => setShowToDate(false)}
@@ -110,7 +108,7 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
       <TypeModal
         modalVisible={showStatus}
         setModalVisible={() => setShowStatus(false)}
-        handleSelect={status =>{ handleSelect('status', status); setShowStatus(false) }}
+        handleSelect={status =>{ handleSelect(generalConst.STATUS, status); setShowStatus(false) }}
         options={statusOptions}
         handleCancel = {() => setShowStatus(false)}
       />
@@ -118,7 +116,7 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
       <TypeModal
             modalVisible = {showType}
             setModalVisible = {setShowType}
-            handleSelect = {type =>{ handleSelect('type', type); setShowType(false)}}
+            handleSelect = {type =>{ handleSelect(generalConst.TYPE, type); setShowType(false)}}
             handleCancel = {() => setShowType(false)}
             options = {typeOptions}
         />
@@ -129,7 +127,6 @@ const LeaveFilter = ({ onFilterChange, initialFilters }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 10,
-    // backgroundColor: '#f5f5f5',
   },
   filterRow: {
     flexDirection: 'row',
@@ -145,7 +142,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   clearText: {
-    color: '#007AFF',
+    color: COLORS.blue,
     fontSize: 14,
   },
 });

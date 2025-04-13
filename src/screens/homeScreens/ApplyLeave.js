@@ -1,25 +1,22 @@
-// ApplyLeaveScreen.js
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Button, TextInput, Alert, StyleSheet } from 'react-native';
-// import DatePicker from 'react-native-date-picker';
+import { View, Text, Button, TextInput, Alert, StyleSheet, Keyboard } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useDispatch, useSelector } from 'react-redux';
-import { applyForLeave } from '../../redux/slices/userSlice';
+import { applyForLeave } from '@redux/slices/userSlice';
 import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay, isSameDay} from 'date-fns';
-import Calender from '../../assets/images/date_input.png';
-import DropDownIcon from '../../assets/images/DropDownIcon.png'
-import InputFields from '../../sharedComponents/InputFields';
+import Calender from '@assets/images/date_input.png';
+import DropDownIcon from '@assets/images/DropDownIcon.png'
+import InputFields from '@sharedComponents/InputFields';
 import { useFocusEffect } from '@react-navigation/native';
-import TypeModal from '../../sharedComponents/TypeModal';
-import { formatDate, hasExistingWFHThisMonth } from '../../appHooks/appHook';
+import TypeModal from '@sharedComponents/TypeModal';
+import { Alerts, formatDate, hasExistingWFHThisMonth, typeOptions } from '@appHooks/appHook';
+import { COLORS } from '@styles/theme';
+import { generalConst, keyboardType, labelConstants, placeholder, screenLabel, validationMessage } from '@constants/appConstant';
 
 const ApplyLeave = ({navigation}) => {
     const dispatch = useDispatch();
     const currentUser = useSelector(state => state.users.currentUser);
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
-    const [type, setType] = useState(null);
-    const [reason, setReason] = useState(null);
+    const [value, setValue] = useState({startDate:null, endDate:null, type:null, reason:null})
     const [showStartPicker, setShowStartPicker] = useState(false);
     const [showEndPicker, setShowEndPicker] = useState(false);
     const [typeVisible, setTypeVisible] = useState(false);
@@ -30,39 +27,41 @@ const ApplyLeave = ({navigation}) => {
     const totalLeaves = currentUser?.totalLeaves || 12;
 
     const remainingLeaves = currentUser?.remainingLeaves || 12;
-    const typeOptions = ['WFH', 'Personal Leave', 'Sick Leave', 'On Site'];
 
     useFocusEffect(
         useCallback(()=>{
-            return setError(null);
+            return( 
+                setError(null),
+                setValue({startDate:null, endDate:null, type:null, reason:null})
+            )
         },[navigation])
     )
 
 
     useEffect(() => {
-        if(type){
-            if (type === 'WFH' && startDate && endDate) {
-                if (!isSameDay(startDate, endDate)) {
-                  setEndDate(startDate);
+        if(value.type){
+            if (value.type === generalConst.WFH && value.startDate && value.endDate) {
+                if (!isSameDay(value.startDate, value.endDate)) {
+                  setValue(prev => ({...prev, endDate:value.startDate}))
                 }
                 
             }
-            validateEndDate(startDate);
+            validateEndDate(value.startDate);
         }
-      }, [type]);
+      }, [value.type]);
 
 
     const validateStartDate = (date) => {
         let errorMessage = null;
         
-        console.log(isWeekend(date), 'date')
+        console.log(isWeekend(date), generalConst.DATE)
         if (isWeekend(date)) {
             
-          errorMessage = 'Start date cannot be on a weekend';
+          errorMessage = validationMessage.START_DATE_CANNOT_WEEKEND;
         }
         
-        if (endDate && isAfter(date, endDate)) {
-          errorMessage = 'Start date must be before end date';
+        if (value.endDate && isAfter(date, value.endDate)) {
+          errorMessage = validationMessage.START_DATE_BEFORE_END_DATE;
         }
       
         setError(prev => ({ ...prev, startDate: errorMessage }));
@@ -72,101 +71,94 @@ const ApplyLeave = ({navigation}) => {
     const validateEndDate = (date) => {
         let errorMessage = null;
         
-        if (!date) {
-          errorMessage = 'End date is required';
-        }
-        else if (isWeekend(date)) {
-            errorMessage = 'End date cannot be on a weekend';
-        } else if (startDate) {
-            console.log('6');
-          if (isBefore(date, startDate)) {
-            console.log('1');
+        if (isWeekend(date)) {
+            errorMessage = validationMessage.END_DATE_CANNOT_WEEKEND;
+        } else if (value.startDate) {
+          if (isBefore(date, value.startDate)) {
             
-            errorMessage = 'End date cannot be before start date';
+            errorMessage = validationMessage.END_DATE_AFTER_START_DATE;
           }
-          else if (type === 'WFH') {
-            if (differenceInDays(date, startDate) !== 0) {
-              errorMessage = 'WFH must be for a single day';
+          else if (value.type === generalConst.WFH) {
+            if (differenceInDays(date, value.startDate) !== 0) {
+              errorMessage = validationMessage.ONLY_ONE_WFH;
             }
             if (hasExistingWFHThisMonth(currentUser)) {
-              errorMessage = 'WFH already applied this month';
+              errorMessage = validationMessage.WFH_APPLIED_THIS_MONTH;
             }
           }
           
           else if (
-            getDay(startDate) === 5 && 
+            getDay(value.startDate) === 5 && 
             getDay(date) === 1 && 
-            differenceInDays(date, startDate) === 3
+            differenceInDays(date, value.startDate) === 3
           ) {
-            console.log('2');
-            errorMessage = 'Cannot bridge weekend (Friday to Monday)';
+            errorMessage = validationMessage.SANDWHICH_RULE;
           }
   
           else {
             const allDays = eachDayOfInterval({ 
-              start: startDate, 
+              start: value.startDate, 
               end: date 
             });
             const workingDays = allDays.filter(d => !isWeekend(d)).length;
-            console.log('3');
             if (workingDays > remainingLeaves) {
-                console.log('4');
               errorMessage = `Exceeds remaining ${remainingLeaves} ${
                 remainingLeaves === 1 ? 'day' : 'days'
               }`;
             }
           }
         }
-        console.log('5');
         setError(prev => ({ ...prev, endDate: errorMessage }));
         return !errorMessage;
       };
 
     const validateReason = () => {
-        const errorMessage = !reason.trim() ? 'Reason is required' : null;
+        const errorMessage = !value?.reason?.trim() ? validationMessage.REASON_IS_REQUIRED : null;
         setError(prev => ({ ...prev, reason: errorMessage }));
         return !errorMessage;
     };
 
     const handleTypeSelect = (status) => {
-        setType(status);
+        setValue(prev => ({...prev, type:status}))
         setTypeVisible(false);
     }
 
     const handleTypeCancel = () => {
-        const errorMessage = !type?.trim() ? 'Leave type is required' : null;
+        const errorMessage = !value.type?.trim() ? validationMessage.LEAVE_TYPE_REQUIRED : null;
         setError(prev => ({ ...prev, type: errorMessage }));
         setTypeVisible(false);
         return !errorMessage;
 
     }
     
-    const handleDateConfirm = (type, date) => {
-        if (type === 'start') {
-            setEndDate(null);
-            setStartDate(date);
-            if (type === 'WFH') {
-                setEndDate(date);
+    const handleDateConfirm = (Datetype, date) => {
+        if (Datetype === generalConst.START) {
+            setValue(prev => ({...prev, startDate:date, endDate:null}))
+            if (value.type === generalConst.WFH) {
+            
+                setValue(prev => ({...prev, endDate:date}))
+
               }
             validateStartDate(date);
             setShowStartPicker(false)
         } else {
-            const finalDate = type === 'WFH' ? startDate : date;
-            setEndDate(finalDate);
+            const finalDate = value.type === generalConst.WFH ? value.startDate : date;
+          
+            setValue(prev => ({...prev, endDate:finalDate}))
             validateEndDate(finalDate);
             setShowEndPicker(false);
         }
     };
 
-    const handleCancel = (type) => {
-        if (type === 'start') {
-            if(!startDate){
-                setError(prev => ({...prev, startDate: 'Start Date is required'}));
+    const handleCancel = (Datetype) => {
+        if (Datetype === generalConst.START) {
+            if(!value.startDate){
+                setError(prev => ({...prev, startDate: validationMessage.START_DATE_REQUIRED}));
             }
             setShowStartPicker(false)
         } else {
-            if(!endDate){
-                setError(prev => ({...prev, endDate: 'End Date is required'}));
+            if(!value.endDate){
+                setError(prev => ({...prev, endDate: validationMessage.END_DATE_REQUIRED}));
             }
             setShowEndPicker(false);
         }
@@ -174,117 +166,114 @@ const ApplyLeave = ({navigation}) => {
 
     const validateForm = () => {
         const validations = [
-          validateStartDate(startDate),
-          validateEndDate(endDate),
+          validateStartDate(value.startDate),
+          validateEndDate(value.endDate),
           handleTypeCancel(),
           validateReason(),
-          type === 'WFH' && !isWeekend(startDate),
         ];
         return validations.every(v => v);
     };
 
     
     const handleApply = () => {
+        Keyboard.dismiss();
         if (validateForm()) {
-            const isManager = currentUser?.role === 'manager';
+            const isManager = currentUser?.role === generalConst.MANAGER;
             const leaveDetails = {
-                startDate: startDate.toISOString(),
-                endDate: endDate.toISOString(),
-                reason,
-                type,
-                status: isManager ? 'approved' : 'pending',
+                startDate: value.startDate.toISOString(),
+                endDate: value.endDate.toISOString(),
+                reason : value.reason,
+                type : value.type,
+                status: isManager ? generalConst.APPROVED : generalConst.PENDING,
                 appliedDate: new Date().toISOString()
             };
             if (isManager) {
             leaveDetails.approvedBy = currentUser.id;
             leaveDetails.approvalDate = new Date().toISOString();
             }
-          dispatch(applyForLeave({leaveDetails}));
-          setStartDate(null);
-          setEndDate(null);
-          setReason(null);
-          setType(null)
-          Alert.alert('Success', `Leave ${isManager ? 'Approved' : 'Applied'} Successfully`);
+            dispatch(applyForLeave({leaveDetails}));
+            setValue({startDate:null, endDate:null, type:null, reason:null})
+            Alerts(generalConst.SUCCESS,  `Leave ${isManager ? 'Approved' : 'Applied'} Successfully`)
         }else{
-            Alert.alert('Failed', 'Fill all fields correctly to apply leave');
+            Alerts(generalConst.FAILED, validationMessage.ENTER_ALL_FIELDS)
         }
     };
 
   return (
-    <View style={{ padding: 20 }}>
-        <Text style={styles.title}>Apply Leave</Text>
-      <Text style={{ fontSize: 18, marginBottom: 20 }}>
-        Remaining Leaves: {remainingLeaves}/{totalLeaves}
-      </Text>
+    <View style={styles.container}>
+        <Text style={styles.title}>{labelConstants.APPLY_LEAVE_LABEL}</Text>
+        <Text style={styles.remainingTexr}>
+            Remaining Leaves: {remainingLeaves}/{totalLeaves}
+        </Text>
 
       <InputFields 
-            label={'From'} 
-            value={startDate ? formatDate(startDate) : null}
+            label={labelConstants.FROM} 
+            value={value.startDate ? formatDate(value.startDate) : null}
             onIconPress={() => {
                 setError(prev => ({...prev, startDate: null}));
                 setShowStartPicker(true);
               }}
             iconSource={Calender}
             editable={false}
-            placeholder={'select start date'}
+            placeholder={placeholder.SELECT_START_DATE}
             error={error?.startDate}
         />
 
         <InputFields 
-            label={'To'} 
-            value={endDate ? formatDate(endDate) : null} 
+            label={labelConstants.TO} 
+            value={value.endDate ? formatDate(value.endDate) : null} 
             onIconPress={() => {
                 setError(prev => ({...prev, endDate: null}));
                 setShowEndPicker(true);
               }}
             iconSource={Calender}
             editable={false}
-            placeholder={'select end date'}
+            placeholder={placeholder.SELECT_END_DATE}
             error={error?.endDate}
         />
 
         <InputFields 
-            label={'Type'} 
-            value={type} 
-            keyboardType={'default'}
+            label={labelConstants.TYPE} 
+            value={value.type} 
+            keyboardType={keyboardType.DEFAULT}
             onIconPress={() =>{
                 setError(prev => ({...prev, type: null})); 
                 setTypeVisible(true)
             }}
             iconSource={DropDownIcon}
             editable={false}
-            placeholder={'Select Leave Type'}
+            placeholder={placeholder.SELECT_LEAVE_TYPE}
             error={error?.type}
         />
 
         <InputFields 
-            label={'Reason'} 
-            value={reason} 
-            keyboardType={'default'}
+            label={labelConstants.REASON} 
+            value={value.reason} 
+            keyboardType={keyboardType.DEFAULT}
             onFocus={() => {setError(prev => ({...prev, reason: null}));}} 
             onBlur={validateReason}
-            onChangeText={(text) => {setReason(text)}}
+            onChangeText={(text) => {setValue(prev => ({...prev, reason:text}))}}
             editable={true}
             maxLength={150}
-            placeholder={'state your reason'}
+            placeholder={placeholder.ENTER_REASON}
             error={error?.address}
         />
         <DateTimePickerModal
             isVisible={showStartPicker}
-            mode={'date'}
+            mode={generalConst.DATE}
             minimumDate={today}
             maximumDate={endOfYear}
-            onConfirm={date => handleDateConfirm('start', date)}
-            onCancel={() => handleCancel('start')}
+            onConfirm={date => handleDateConfirm(generalConst.START, date)}
+            onCancel={() => handleCancel(generalConst.START)}
         />
 
         <DateTimePickerModal
             isVisible={showEndPicker}
-            mode={'date'}
+            mode={generalConst.DATE}
             minimumDate={today}
             maximumDate={endOfYear}
-            onConfirm={date => handleDateConfirm('end', date)}
-            onCancel={() => handleCancel('end')}
+            onConfirm={date => handleDateConfirm(generalConst.END, date)}
+            onCancel={() => handleCancel(generalConst.END)}
         />
 
         <TypeModal
@@ -296,9 +285,9 @@ const ApplyLeave = ({navigation}) => {
         />
 
         <Button
-            title="Apply Leave"
+            title= {screenLabel.APPLY_LEAVE_LABEL}
             onPress={handleApply}
-            disabled={!startDate || !endDate || !reason || !type}
+            disabled={!value.startDate || !value.endDate || !value.reason || !value.type}
         />
     </View>
   );
@@ -307,11 +296,18 @@ const ApplyLeave = ({navigation}) => {
 export default ApplyLeave;
 
 const styles = StyleSheet.create({
+    container:{
+        padding: 20,
+    },
     title: {
         fontSize: 24,
         fontWeight: '600',
-        color: '#2d3436',
+        color: COLORS.headerLabel,
         marginBottom: 20,
         textAlign: 'center',
-      },
+    },
+    remainingTexr:{ 
+        fontSize: 18,
+        marginBottom: 20 
+    },
 });

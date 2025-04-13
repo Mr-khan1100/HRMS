@@ -1,9 +1,10 @@
 
 
+import { nonDeductibleTypes } from '@appHooks/appHook';
+import { generalConst } from '@constants/appConstant';
 import { createSlice } from '@reduxjs/toolkit';
 import { isWeekend, parseISO, eachDayOfInterval,} from 'date-fns';
 
-const nonDeductibleTypes = ['WFH', 'On Site'];
 const initialState = {
   currentUser: null,
   allUsers: []
@@ -18,16 +19,16 @@ const userSlice = createSlice({
       const existingUser = state.allUsers.find(user => user.email === email);
       
       if (!existingUser) {
-        const role = email.startsWith('Manager_') ? 'manager' : 'employee';
+        const role = email.startsWith(generalConst.MANAGER_) ? generalConst.MANAGER : generalConst.EMPLOYEE;
         const newUser = {
           id: Date.now().toString(),
-          name: email.split('@')[0].replace('Manager_', '').replace('User_', ''),
+          name: email.split('@')[0].replace(generalConst.MANAGER_, '').replace(generalConst.USER_, ''),
           email,
           password,
           age: 25,
-          totalLeaves: role === 'manager' ? 15 : 12,
-          remainingLeaves: role === 'manager' ? 15 : 12,
-          gender: 'Male',
+          totalLeaves: role === generalConst.MANAGER ? 15 : 12,
+          remainingLeaves: role === generalConst.MANAGER ? 15 : 12,
+          gender: generalConst.MALE,
           joinDate: new Date().toISOString(),
           role,
           logedIn: true,
@@ -49,7 +50,7 @@ const userSlice = createSlice({
           const newLeave = {
             id: Date.now().toString(),
             ...leaveDetails,
-            ...(state.currentUser.role === 'manager' && {
+            ...(state.currentUser.role === generalConst.MANAGER && {
               approvedBy: state.currentUser.id,
               approvalDate: new Date().toISOString()
             })
@@ -81,11 +82,11 @@ const userSlice = createSlice({
         const { leaveId, managerId } = action.payload;
         
         state.allUsers.forEach(user => {
-          if (user.role !== 'manager') {
+          if (user.role !== generalConst.MANAGER) {
             const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
             if (leaveIndex !== -1) {
               const leave = user.leaveApplied[leaveIndex];
-              leave.status = 'approved';
+              leave.status = generalConst.APPROVED;
               leave.approvedBy = managerId;
               leave.approvalDate = new Date().toISOString();
             }
@@ -95,7 +96,7 @@ const userSlice = createSlice({
     rejectLeave: (state, action) => {
         const { leaveId, managerId } = action.payload;
         state.allUsers.forEach(user => {
-          if (user.role !== 'manager') {
+          if (user.role !== generalConst.MANAGER) {
             const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
             if (leaveIndex !== -1) {
                 const leave = user.leaveApplied[leaveIndex];
@@ -111,7 +112,7 @@ const userSlice = createSlice({
                     user.remainingLeaves + weekdays
                     );
                 }
-                leave.status = 'rejected';
+                leave.status = generalConst.REJECTED;
                 leave.rejectedBy = managerId;
                 leave.rejectionDate = new Date().toISOString();
             }

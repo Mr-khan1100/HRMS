@@ -1,20 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { signOutUser } from '../../redux/slices/userSlice';
+import { signOutUser } from '@redux/slices/userSlice';
 import { CommonActions } from '@react-navigation/native';
+import { COLORS } from '@styles/theme';
+import { BlueButton } from '@sharedComponents/BlueButton';
+import { labelConstants, screenLabel } from '@constants/appConstant';
 
 const ProfileScreen = (props) => {
   const dispatch = useDispatch();
   const user = useSelector(state => state.users.currentUser);
 
   const handleLogout = () => {
-    props.navigation.navigate('Auth');
+    props.navigation.navigate(screenLabel.AUTH);
         props.navigation.dispatch(
           CommonActions.reset({
             index: 0,
             routes: [
-              { name: 'Auth'}, 
+              { name: screenLabel.AUTH}, 
             ],
           })
         )
@@ -56,10 +59,12 @@ const ProfileScreen = (props) => {
         </Text>
       </View>
 
-      {/* Logout Button */}
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>Logout</Text>
-      </TouchableOpacity>
+        <BlueButton
+              label={labelConstants.LOGOUT}
+              onPress={handleLogout}
+              buttonStyle={styles.logoutButton}
+              textStyle={styles.logoutText}
+        />
     </ScrollView>
   );
 };
@@ -69,42 +74,42 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#F2F2F2',
+    backgroundColor: COLORS.offWhite,
     flexGrow: 1,
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.background,
     borderRadius: 16,
     padding: 20,
     elevation: 4,
     marginBottom: 40,
   },
   heading: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#0076BD',
+    fontSize: 24,
+    fontWeight: '600',
+    color: COLORS.headerLabel,
     marginBottom: 20,
     textAlign: 'center',
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.labelText,
     marginTop: 10,
   },
   value: {
     fontSize: 16,
-    color: '#555',
+    color: COLORS.value,
   },
   logoutButton: {
-    backgroundColor: '#FF4C4C',
+    backgroundColor: COLORS.red,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
   },
   logoutText: {
-    color: '#fff',
+    color: COLORS.background,
     fontSize: 16,
     fontWeight: '600',
   },

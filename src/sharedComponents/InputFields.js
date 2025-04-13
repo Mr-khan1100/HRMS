@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import React from 'react';
-import { COLORS } from '../styles/theme';
+import { COLORS } from '@styles/theme';
 
 const InputFields = ({
     label,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     marginVertical: 5,
-    color: '#4E4E4E',
+    color: COLORS.grey,
   },
   inputContainer: {
     marginBottom: 15,
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderColor: '#ccc',
+    borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 10,
@@ -67,12 +67,12 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: 50,
-    color:'#2E2E2E',
+    color: COLORS.input,
   },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    tintColor:'#f9f9f9',
+    tintColor: COLORS.tint,
     marginRight: 30,
   },
   icon: {
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   errorText: {
-    color: 'red',
+    color: COLORS.red,
     marginTop: 5,
   },
 

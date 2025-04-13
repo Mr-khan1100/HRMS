@@ -1,5 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import { COLORS } from "../styles/theme";
+import { COLORS } from "@styles/theme";
 
 export const BlueButton = ({onPress, label, buttonStyle, textStyle, containerStyle}) => {
     return (

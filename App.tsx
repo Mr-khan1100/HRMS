@@ -1,8 +1,8 @@
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import AppNavigator from "./src/navigation/AppNavigator";
+import AppNavigator from "@navigation/AppNavigator";
 import { SafeAreaView, StyleSheet } from "react-native";
-import { COLORS } from "./src/styles/theme";
-import { persistor, store } from "./src/redux/store/store";
+import { COLORS } from "@styles/theme";
+import { persistor, store } from "@redux/store/store";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 

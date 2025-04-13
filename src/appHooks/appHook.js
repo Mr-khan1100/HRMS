@@ -1,5 +1,6 @@
+import { generalConst } from '@constants/appConstant';
 import { parseISO} from 'date-fns';
-
+import { Alert } from 'react-native';
 
 const isSameMonth = (date1, date2) => {
     return date1.getFullYear() === date2.getFullYear() && 
@@ -10,7 +11,7 @@ export const hasExistingWFHThisMonth = (currentUser) => {
     if (!currentUser) return false;
     const currentDate = new Date();
     return currentUser.leaveApplied.some(leave => 
-      leave.type === 'WFH' && 
+      leave.type === generalConst.WFH && 
       isSameMonth(parseISO(leave.startDate), currentDate)
     );
 };
@@ -23,3 +24,22 @@ export const formatDate = date => {
     return `${day}/${month}/${year}`;
 };
   
+export const statusOptions = [generalConst.PENDING, generalConst.APPROVED, generalConst.REJECTED];
+export const typeOptions = [generalConst.WFH, generalConst.PL, generalConst.SL, generalConst.ON_SITE];
+export const nonDeductibleTypes = [generalConst.WFH, generalConst.ON_SITE];
+
+
+export const Alerts = (header, message) =>{
+    Alert.alert(
+        header,  
+        message,
+        [
+            { 
+            text: generalConst.OK, 
+            onPress: () => console.log(generalConst.OK_PRESSED),
+            style: generalConst.CANCEL ,
+            },
+        ],
+        { cancelable: true }
+    );
+};

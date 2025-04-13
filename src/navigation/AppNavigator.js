@@ -1,43 +1,37 @@
-import { View, Text } from 'react-native'
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import React from 'react'
-import { COLORS } from '../styles/theme'
-import { TabBarProvider } from '../contexts/TabBarContext'
+import { COLORS } from '@styles/theme'
 import AuthStack from './AuthStack';
 import HomeStack from './HomeStack';
 import { useSelector } from 'react-redux';
-import { selectCurrentUser } from '../redux/slices/userSlice';
+import { selectCurrentUser } from '@redux/slices/userSlice';
+import { screenLabel } from '@constants/appConstant';
 
 const AppNavigator = () => {
     const Stack = createNativeStackNavigator();
     const currentUser = useSelector(selectCurrentUser);
-    console.log(currentUser, 'currentuser');
     
   return (
-    // <TabBarProvider>
-        <NavigationContainer
-        // ref={navigationRef}
-        >
+        <NavigationContainer>
             <Stack.Navigator
                 screenOptions={{
                 headerShown: false,
                 gestureEnabled: false,
                 }}
-                initialRouteName={currentUser ? 'Home' : 'Auth'}>
+                initialRouteName={currentUser ? screenLabel.HOME : screenLabel.AUTH}>
                     <Stack.Screen
-                        name="Auth"
+                        name = {screenLabel.AUTH}
                         component={AuthStack}
                         options={{gestureEnabled: false, navigationBarColor:COLORS.background}}
                     />
                     <Stack.Screen
-                        name="Home"
+                        name={screenLabel.HOME}
                         component={HomeStack}
                         options={{gestureEnabled: false , navigationBarColor:COLORS.background}}
                     />
             </Stack.Navigator>
         </NavigationContainer>
-    // </TabBarProvider>
   )
 }
 

@@ -2,19 +2,19 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
   Image,
+  ScrollView,
 } from 'react-native';
-// import Icon from 'react-native-vector-icons/Feather';
-import { BlueButton } from '../../sharedComponents/BlueButton';
-import eyeOpen from '../../assets/images/eye-open.jpg';
-import eyeClose from '../../assets/images/eye-close.jpg';
-import { COLORS } from '../../styles/theme';
-import InputFields from '../../sharedComponents/InputFields';
+import { BlueButton } from '@sharedComponents/BlueButton';
+import eyeOpen from '@assets/images/eye-open.jpg';
+import eyeClose from '@assets/images/eye-close.jpg';
+import logo from '@assets/images/logo.jpg'
+import { COLORS } from '@styles/theme';
+import InputFields from '@sharedComponents/InputFields';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectAllUsers, signInUser } from '../../redux/slices/userSlice';
+import { selectAllUsers, signInUser } from '@redux/slices/userSlice';
+import { generalConst, keyboardType, labelConstants, placeholder, regex, screenLabel, validationMessage } from '@constants/appConstant';
 
 const SignInScreen = ({navigation}) => {
   const [userCred, setUserCred] = useState({email:'', password:''});
@@ -29,49 +29,50 @@ const SignInScreen = ({navigation}) => {
 
   const handleSignIn = () =>{
     if(!validateInputs()) return;
+
     const existingUser = allUsers.find(user => user.email === userCred.email);
     
     if (existingUser) {
       if (existingUser.password !== userCred.password) {
-        setError({ ...error, password: 'Incorrect password' });
+        setError({ ...error, password: validationMessage.INCORRECT_PASSWORD });
         return;
       }
     }
     
     dispatch(signInUser(userCred));
-    navigation.navigate('Home');
+    navigation.navigate(screenLabel.HOME);
 
   }
 
   const handleChange = (field, value) => {
     const trimmedValue = value.replace(/\s+/g, '');
     setUserCred(prev => ({ ...prev, [field]: trimmedValue }));
-    setError(prev => ({ ...prev, [field]: '' }));
+    setError(prev => ({ ...prev, [field]: null }));
   };
 
   const validateInputs = (field, value) => {
+
     const newErrors = { ...error };
 
-    if (!field || field === 'email') {
+    if (!field || field === generalConst.EMAIL) {
       const emailValue = value || userCred.email;
       if (!emailValue) {
-        newErrors.email = 'Email is required';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
-        newErrors.email = 'Invalid email format';
-      }else if (!emailValue.startsWith('User_') && !emailValue.startsWith('Manager_')) {
-        newErrors.email = 'Email must start with either User_ or Manager_';
+        newErrors.email = validationMessage.EMAIL_IS_REQUIRED;
+      } else if (!regex.EMAIL.test(emailValue)) {
+        newErrors.email = validationMessage.IVALID_EMAIL_FORMAT;
+      }else if (!emailValue.startsWith(generalConst.USER_) && !emailValue.startsWith(generalConst.MANAGER_)) {
+        newErrors.email = validationMessage.EMAIL_START_WITH;
       } else {
         delete newErrors.email;
+
       }
     }
-
-    if (!field || field === 'password') {
+    if (!field || field === generalConst.PASSWORD) {
       const passwordValue = value || userCred.password;
       if (!passwordValue) {
-        newErrors.password = 'Password is required';
-      } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*["'+,.:;<>_`|~!@#?£\-$%^&*{}()\$%\^&\*\{}\()\-\]\\/[])(?=.{8,})/.test(passwordValue)) {
-        newErrors.password =
-          'Password must be at least 8 characters long and include uppercase, lowercase, number, and special character';
+        newErrors.password = validationMessage.PASSWORD_IS_REQUIRED;
+      } else if (!regex.PASSWORD.test(passwordValue)) {
+        newErrors.password = validationMessage.PASSWORD_MUST_BE;
       } else {
         delete newErrors.password;
       }
@@ -83,46 +84,52 @@ const SignInScreen = ({navigation}) => {
 
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sign In</Text>
+    <View style={styles.container} >
+   {/* <ScrollView  contentContainerStyle={styles.container}> */}
+      <Image
+        source={logo}
+        style ={styles.logo}
+      />
+      <Text style={styles.title}>{labelConstants.SIGNIN}</Text>
 
       <InputFields 
-            label={'Email'} 
+            label={labelConstants.EMAIL} 
             value={userCred.email} 
-            keyboardType={'email-address'}
+            keyboardType={keyboardType.EMAIL}
             onFocus={() => {
               setError(prev => ({...prev, email:null}));
             }} 
-            onBlur={() => validateInputs('email', userCred.email)}
-            onChangeText={value => handleChange('email', value)}
+            onBlur={() => validateInputs(generalConst.EMAIL, userCred.email)}
+            onChangeText={value => handleChange(generalConst.EMAIL, value)}
             secureTextEntry={false}
             editable={true}
             maxLength={50}
-            placeholder={'Enter Email'}
+            placeholder={placeholder.ENTER_EMAIL}
             error={error?.email}
         />
 
         <InputFields 
-            label={'Password'} 
+            label={labelConstants.PASSWORD} 
             value={userCred.password} 
-            keyboardType={'default'}
+            keyboardType={keyboardType.DEFAULT}
             onFocus={() => {setError(prev => ({...prev, password:null}));}} 
-            onBlur={() => validateInputs('password', userCred.password)}
-            onChangeText={value => handleChange('password', value)}
+            onBlur={() => validateInputs(generalConst.PASSWORD, userCred.password)}
+            onChangeText={value => handleChange(generalConst.PASSWORD, value)}
             onIconPress={toggleSecureEntry}
             iconSource={secureText ? eyeClose : eyeOpen}
             editable={true}
             secureTextEntry={secureText}
             maxLength={20}
-            placeholder={'Enter Password'}
+            placeholder={placeholder.ENTER_PASSWORD}
             error={error?.password}
         />
 
       <BlueButton 
-        label={'Sign In'}
+        label={labelConstants.SIGNIN}
         onPress={handleSignIn}
         containerStyle={styles.buttonContainer}
       />
+    {/* </ScrollView> */}
     </View>
   );
 };
@@ -141,9 +148,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 32,
     textAlign: 'center',
-    color: COLORS.blue,
+    color: COLORS.headerLabel,
   },
   buttonContainer:{
     marginTop:10
+  },
+  logo:{
+    width: '50%',
+    height:'30%',
+    justifyContent:'center',
+    alignItems:'center',
+    alignSelf:'center',
+    resizeMode: 'contain',
   }
 });

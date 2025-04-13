@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import LeaveCard from '../../sharedComponents/LeaveCard';
-import { approveLeave, rejectLeave } from '../../redux/slices/userSlice';
-import LeaveFilter from '../../sharedComponents/LeaveFilter';
+import LeaveCard from '@sharedComponents/LeaveCard';
+import { approveLeave, rejectLeave } from '@redux/slices/userSlice';
+import LeaveFilter from '@sharedComponents/LeaveFilter';
 import { parseISO } from 'date-fns';
+import { COLORS } from '@styles/theme';
+import { generalConst } from '@constants/appConstant';
 
 const ApproveLeave = () => {
     const dispatch = useDispatch();
@@ -12,7 +14,7 @@ const ApproveLeave = () => {
   const allUsers = useSelector(state => state.users.allUsers);
 const [filters, setFilters] = useState({});
   const allLeaves = allUsers.flatMap(user =>{
-    if (user.role === 'manager') return []; 
+    if (user.role === generalConst.MANAGER) return []; 
    return user.leaveApplied.map(leave => ({
       ...leave,
       employeeName: user.name,
@@ -64,7 +66,7 @@ const filteredLeaves = allLeaves.filter(leave => {
     }
     renderItem={({ item }) => <LeaveCard 
         leave={item} 
-        isManager={currentUser.role === 'manager'} 
+        isManager={currentUser.role === generalConst.MANAGER} 
         onApprove={handleApprove}
         onReject={handleReject} 
     />}
@@ -84,7 +86,7 @@ const styles = StyleSheet.create({
     title: {
       fontSize: 24,
       fontWeight: '600',
-      color: '#2d3436',
+      color: COLORS.headerLabel,
       marginBottom: 20,
       textAlign: 'center',
     },
@@ -95,7 +97,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#636e72',
+        color: COLORS.emptyText,
     },
     separator: {
         height: 16,

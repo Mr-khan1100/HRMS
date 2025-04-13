@@ -1,22 +1,19 @@
+import { generalConst, placeholder } from '@constants/appConstant';
+import { COLORS } from '@styles/theme';
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 
-
-// const LeaveTypes = ['WFH', 'Personal Leave', 'Sick Leave', 'On Site'];
-
 const TypeModal = ({ modalVisible, setModalVisible, handleSelect, handleCancel, options}) => {
-
-
   return (
     <Modal
       transparent
-      animationType={'fade'}
+      animationType={generalConst.FADE}
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>{'Select Leave Type'}</Text>
+          <Text style={styles.modalTitle}>{placeholder.SELECT_LEAVE_TYPE}</Text>
             {
                 options.map((status, index) => (
                     <TouchableOpacity 
@@ -33,7 +30,7 @@ const TypeModal = ({ modalVisible, setModalVisible, handleSelect, handleCancel, 
             style={styles.closeButton} 
             onPress={handleCancel}
           >
-            <Text style={styles.closeText}>Cancel</Text>
+            <Text style={styles.closeText}>{generalConst.CANCEL}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -50,7 +47,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: 300,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -60,28 +57,28 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#333',
+    color: COLORS.headerLabel,
   },
   option: {
     paddingVertical: 12,
     width: '100%',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: COLORS.bottomBorder,
     alignItems: 'center',
   },
   optionText: {
     fontSize: 16,
-    color: '#000',
+    color: COLORS.value,
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#ff4757',
+    backgroundColor: COLORS.maroon,
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 30,
   },
   closeText: {
-    color: '#fff',
+    color: COLORS.background,
     fontWeight: 'bold',
   },
 });

@@ -1,14 +1,16 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { format, parseISO, differenceInDays, eachDayOfInterval, isWeekend } from 'date-fns';
+import { COLORS } from '@styles/theme';
+import { generalConst, validationMessage } from '@constants/appConstant';
 
 
 const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
     const getStatusStyle = (status) => {
         switch(status.toLowerCase()) {
-          case 'approved': return styles.approvedStatus;
-          case 'pending': return styles.pendingStatus;
-          case 'rejected': return styles.rejectedStatus;
+          case generalConst.APPROVED: return styles.approvedStatus;
+          case generalConst.PENDING: return styles.pendingStatus;
+          case generalConst.REJECTED: return styles.rejectedStatus;
           default: return styles.pendingStatus;
         }
     };
@@ -17,7 +19,7 @@ const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
         try {
           return format(parseISO(dateString), 'dd MMM, yyyy');
         } catch {
-          return 'Invalid date';
+          return validationMessage.INVALID_DATE;
         }
     };
 
@@ -70,7 +72,7 @@ const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
         <Text style={styles.appliedDate}>
             Applied on {formatDate(leave.appliedDate)}
         </Text>
-        {isManager && leave.status === 'pending' && (
+        {isManager && leave.status === generalConst.PENDING && (
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={[styles.button, styles.approveButton]}
@@ -100,7 +102,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#2d3436',
+    color: COLORS.value,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -111,14 +113,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#636e72',
+    color: COLORS.emptyText,
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -128,16 +130,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: COLORS.bottomBorder,
   },
   employeeName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2d3436',
+    color: COLORS.value,
   },
   employeeEmail: {
     fontSize: 12,
-    color: '#636e72',
+    color: COLORS.labelText,
   },
   header: {
     flexDirection: 'row',
@@ -145,13 +147,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#dfe6e9',
+    borderBottomColor: COLORS.bottomBorder,
     paddingBottom: 8,
   },
   dates: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#2d3436',
+    color: COLORS.value,
   },
   statusBadge: {
     borderRadius: 15,
@@ -159,19 +161,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   statusText: {
-    color: 'white',
+    color: COLORS.background,
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   approvedStatus: {
-    backgroundColor: '#00b894',
+    backgroundColor: COLORS.green,
   },
   pendingStatus: {
-    backgroundColor: '#fdcb6e',
+    backgroundColor: COLORS.yellow,
   },
   rejectedStatus: {
-    backgroundColor: '#d63031',
+    backgroundColor: COLORS.maroon,
   },
   detailsRow: {
     flexDirection: 'row',
@@ -180,12 +182,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: '#636e72',
+    color: COLORS.labelText,
     width: '30%',
   },
   detailValue: {
     fontSize: 14,
-    color: '#2d3436',
+    color: COLORS.value,
     width: '70%',
     fontWeight: '500',
   },
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#dfe6e9',
+    borderTopColor: COLORS.bottomBorder,
     paddingTop: 8,
   },
   actionButtons: {
@@ -208,13 +210,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   approveButton: {
-    backgroundColor: '#00b894',
+    backgroundColor: COLORS.green,
   },
   rejectButton: {
-    backgroundColor: '#d63031',
+    backgroundColor: COLORS.maroon,
   },
   buttonText: {
-    color: 'white',
+    color: COLORS.background,
     fontSize: 14,
     fontWeight: '500',
   },
