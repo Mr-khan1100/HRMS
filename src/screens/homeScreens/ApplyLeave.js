@@ -12,6 +12,7 @@ import TypeModal from '@sharedComponents/TypeModal';
 import { Alerts, formatDate, hasExistingWFHThisMonth, typeOptions } from '@appHooks/appHook';
 import { COLORS } from '@styles/theme';
 import { generalConst, keyboardType, labelConstants, placeholder, screenLabel, validationMessage } from '@constants/appConstant';
+import { BlueButton } from '@sharedComponents/BlueButton';
 
 const ApplyLeave = ({navigation}) => {
     const dispatch = useDispatch();
@@ -284,8 +285,8 @@ const ApplyLeave = ({navigation}) => {
             options = {typeOptions}
         />
 
-        <Button
-            title= {screenLabel.APPLY_LEAVE_LABEL}
+        <BlueButton
+            label={screenLabel.APPLY_LEAVE_LABEL}
             onPress={handleApply}
             disabled={!value.startDate || !value.endDate || !value.reason || !value.type}
         />

@@ -4,6 +4,7 @@ export const COLORS = {
     placeHolderColor: '#c4bfbe',
     darkBlack : '#070808',
     grey : '#4E4E4E',
+    darkGrey: '#666666',
     headerLabel: '#2d3436',
     emptyText: '#636e72',
     red: '#FF4C4C',

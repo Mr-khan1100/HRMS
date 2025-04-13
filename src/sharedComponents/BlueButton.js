@@ -1,11 +1,11 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import { COLORS } from "@styles/theme";
 
-export const BlueButton = ({onPress, label, buttonStyle, textStyle, containerStyle}) => {
+export const BlueButton = ({onPress, label, buttonStyle, textStyle, containerStyle, disabled = false }) => {
     return (
         <View style={[styles.buttonContainer, containerStyle]}>
-            <TouchableOpacity style={[styles.button, buttonStyle]} onPress={onPress}>
-                <Text style={[styles.buttonText, textStyle]}>{label}</Text>
+            <TouchableOpacity style={[styles.button, buttonStyle, disabled && styles.disabledButton]} onPress={onPress} disabled={disabled} >
+                <Text style={[styles.buttonText, textStyle, disabled && styles.disabledText]}>{label}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -28,4 +28,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  disabledButton: {
+    backgroundColor: COLORS.grey,
+    opacity: 0.7
+  },
+  disabledText: {
+    color: COLORS.darkGrey,
+  }
 });
