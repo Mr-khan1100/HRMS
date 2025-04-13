@@ -45,7 +45,8 @@ export const validationMessage = {
     END_DATE_REQUIRED : 'End Date is required',
     ENTER_ALL_FIELDS : 'Fill all fields correctly to apply leave',
     INVALID_DATE : 'Invalid date',
-
+    LEAVE_OVERLAP : 'This leave overlaps with an existing leave application',
+    ERROR :'Error',
 }
 
 export const regex = {

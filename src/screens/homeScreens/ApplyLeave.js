@@ -3,7 +3,7 @@ import { View, Text, Button, TextInput, Alert, StyleSheet, Keyboard } from 'reac
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { applyForLeave } from '@redux/slices/userSlice';
-import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay, isSameDay} from 'date-fns';
+import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay, isSameDay, startOfDay} from 'date-fns';
 import Calender from '@assets/images/date_input.png';
 import DropDownIcon from '@assets/images/DropDownIcon.png'
 import InputFields from '@sharedComponents/InputFields';
@@ -50,6 +50,24 @@ const ApplyLeave = ({navigation}) => {
             validateEndDate(value.startDate);
         }
       }, [value.type]);
+
+    const validateNoOverlap = (start, end) => {
+    const existingLeaves = currentUser?.leaveApplied?.filter(leave => 
+        leave.status !== 'rejected'
+    ) || [];
+    
+    return !existingLeaves.some(leave => {
+        const existingStart = parseISO(leave.startDate);
+        const existingEnd = parseISO(leave.endDate);
+
+        const normalizedLeaveStart = startOfDay(existingStart);
+        const normalizedLeaveEnd = startOfDay(existingEnd);
+        const normalizedFrom = startOfDay(start);
+        const normalizedTo = startOfDay(end);
+
+        return normalizedFrom <= normalizedLeaveEnd && normalizedTo >= normalizedLeaveStart;
+    });
+    };
 
 
     const validateStartDate = (date) => {
@@ -179,6 +197,12 @@ const ApplyLeave = ({navigation}) => {
     const handleApply = () => {
         Keyboard.dismiss();
         if (validateForm()) {
+            
+            if (!validateNoOverlap(value?.startDate, value?.endDate)) {
+            Alerts(validationMessage.ERROR, validationMessage.LEAVE_OVERLAP)
+            return;
+            }
+
             const isManager = currentUser?.role === generalConst.MANAGER;
             const leaveDetails = {
                 startDate: value.startDate.toISOString(),
