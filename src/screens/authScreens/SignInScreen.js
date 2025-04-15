@@ -46,7 +46,7 @@ const SignInScreen = ({navigation}) => {
 
   const handleChange = (field, value) => {
     const trimmedValue = value.replace(/\s+/g, '');
-    setUserCred(prev => ({ ...prev, [field]: trimmedValue }));
+    setUserCred(prev => ({ ...prev, [field]: field === 'email' ? trimmedValue.toLowerCase() : trimmedValue }));
     setError(prev => ({ ...prev, [field]: null }));
   };
 
@@ -85,7 +85,6 @@ const SignInScreen = ({navigation}) => {
 
   return (
     <View style={styles.container} >
-   {/* <ScrollView  contentContainerStyle={styles.container}> */}
       <Image
         source={logo}
         style ={styles.logo}
@@ -129,7 +128,6 @@ const SignInScreen = ({navigation}) => {
         onPress={handleSignIn}
         containerStyle={styles.buttonContainer}
       />
-    {/* </ScrollView> */}
     </View>
   );
 };

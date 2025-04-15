@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { format, parseISO, differenceInDays, eachDayOfInterval, isWeekend } from 'date-fns';
 import { COLORS } from '@styles/theme';
 import { generalConst, validationMessage } from '@constants/appConstant';
 
 
-const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
+const LeaveCard = ({leave = [], onApprove, onReject, onDelete, isManager, onApproveDelete, onRejectDelete, isHistory=false }) => {
+    
+    const  [expand, setExpand] = useState(false)
     const getStatusStyle = (status) => {
         switch(status.toLowerCase()) {
           case generalConst.APPROVED: return styles.approvedStatus;
@@ -33,7 +35,12 @@ const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
     };
 
     const duration = calculateDuration(leave.startDate, leave.endDate);
+
+    const handleExpansion = () => {
+        setExpand(!expand);
+    }
   return (
+    <TouchableOpacity style={styles.container} activeOpacity={1}  onPress={handleExpansion}>
     <View style={styles.card}>
         {isManager && (
         <View style={styles.employeeInfo}>
@@ -50,29 +57,32 @@ const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
             <Text style={styles.statusText}>{leave.status}</Text>
         </View>
         </View>
+        { expand && 
+        <>
+            <View style={styles.detailsRow}>
+            <Text style={styles.detailLabel}>Duration:</Text>
+            <Text style={styles.detailValue}>
+                {duration.totalDays} days ({duration.weekdays} weekdays)
+            </Text>
+            </View>
 
-        <View style={styles.detailsRow}>
-        <Text style={styles.detailLabel}>Duration:</Text>
-        <Text style={styles.detailValue}>
-            {duration.totalDays} days ({duration.weekdays} weekdays)
-        </Text>
-        </View>
+            <View style={styles.detailsRow}>
+            <Text style={styles.detailLabel}>Type:</Text>
+            <Text style={styles.detailValue}>{leave.type}</Text>
+            </View>
 
-        <View style={styles.detailsRow}>
-        <Text style={styles.detailLabel}>Type:</Text>
-        <Text style={styles.detailValue}>{leave.type}</Text>
-        </View>
-
-        <View style={styles.detailsRow}>
-        <Text style={styles.detailLabel}>Reason:</Text>
-        <Text style={styles.detailValue}>{leave.reason}</Text>
-        </View>
+            <View style={styles.detailsRow}>
+            <Text style={styles.detailLabel}>Reason:</Text>
+            <Text style={styles.detailValue}>{leave.reason}</Text>
+            </View>
+        </>
+        }
 
         <View style={styles.footer}>
         <Text style={styles.appliedDate}>
             Applied on {formatDate(leave.appliedDate)}
         </Text>
-        {isManager && leave.status === generalConst.PENDING && (
+        {isManager && leave.status === generalConst.PENDING &&(
           <View style={styles.actionButtons}>
             <TouchableOpacity 
               style={[styles.button, styles.approveButton]}
@@ -89,15 +99,56 @@ const LeaveCard = ({leave = [], onApprove, onReject, isManager }) => {
             </TouchableOpacity>
           </View>
         )}
+
+        {leave.status !== generalConst.REJECTED && isHistory &&(
+            <TouchableOpacity 
+            style={[
+                styles.button, 
+                (leave.deleteStatus === generalConst.REJECTED || leave.deleteStatus === generalConst.PENDING) 
+                    ? styles.neutralButton 
+                    : styles.rejectButton
+            ]}
+            onPress={() => onDelete(leave)}
+            disabled={leave.deleteStatus === generalConst.REJECTED || leave.deleteStatus === generalConst.PENDING}
+            >
+            <Text style={styles.buttonText}>
+                {leave.deleteStatus === generalConst.PENDING 
+                ? 'Request Sent' 
+                : leave.deleteStatus === generalConst.REJECTED 
+                ? 'Request Rejected' 
+                : 'Delete'}
+            </Text>
+            </TouchableOpacity>
+        )}
+
+        {leave.deleteRequested && isManager && leave.status !== generalConst.PENDING &&(
+          <>
+            <TouchableOpacity 
+              style={[styles.button, styles.approveButton]}
+              onPress={() => onApproveDelete(leave.id, leave.employeeId)}
+            >
+              <Text>Approve Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+               style={[styles.button, styles.rejectButton]}
+              onPress={() => onRejectDelete(leave.id, leave.employeeId)}
+            >
+              <Text>Reject Delete</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
         </View>
     </View>
+    </TouchableOpacity>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    paddingBottom: 32,
+    paddingHorizontal: 16,
+    // opacity:0.9,
+    // paddingBottom: 32,
   },
   title: {
     fontSize: 24,
@@ -125,6 +176,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    borderWidth:1,
+    borderColor:COLORS.border,
   },
   employeeInfo: {
     marginBottom: 12,
@@ -214,6 +267,9 @@ const styles = StyleSheet.create({
   },
   rejectButton: {
     backgroundColor: COLORS.maroon,
+  },
+  neutralButton: {
+    backgroundColor: COLORS.grey,
   },
   buttonText: {
     color: COLORS.background,

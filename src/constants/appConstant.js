@@ -7,6 +7,7 @@ export const screenLabel = {
     APPLY_LEAVE : 'ApplyLeave',
     APPROVE_LEAVE : 'ApproveLeave',
     PROFILE: 'Profile',
+    PROFILE_SCREEN_LABEL : 'User Profile',
     APPROVE_LEAVE_LABEL : 'Approve Leave',
     LEAVE_HISTORY_LABEL : 'Leave History',
     APPLY_LEAVE_LABEL: 'Apply Leave', 
@@ -72,8 +73,8 @@ export const placeholder = {
 
 
 export const generalConst = {
-    MANAGER_ : 'Manager_',
-    USER_ : 'User_',
+    MANAGER_ : 'manager_',
+    USER_ : 'user_',
     WFH : 'WFH',
     PL : 'Personal Leave',
     SL : 'Sick Leave',

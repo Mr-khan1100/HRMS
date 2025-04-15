@@ -1,22 +1,36 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Animated, Easing, TouchableOpacity, Image, } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import LeaveCard from '@sharedComponents/LeaveCard';
-import { approveLeave, rejectLeave } from '@redux/slices/userSlice';
+import { approveDeleteLeave, approveLeave, rejectDeleteLeave, rejectLeave } from '@redux/slices/userSlice';
 import LeaveFilter from '@sharedComponents/LeaveFilter';
 import DropDownIcon from '@assets/images/DropDownIcon.png';
 import { parseISO, startOfDay } from 'date-fns';
 import { COLORS } from '@styles/theme';
 import { generalConst, labelConstants, screenLabel } from '@constants/appConstant';
+import { useFocusEffect } from '@react-navigation/native';
+import { useConfirmationModal } from '../../contexts/ConfirmationModalContext';
+import CustomHeader from '@sharedComponents/CustomHeader';
 
-const ApproveLeave = () => {
+
+const ApproveLeave = ({navigation}) => {
     const dispatch = useDispatch();
     const currentUser = useSelector(state => state.users.currentUser);
     const allUsers = useSelector(state => state.users.allUsers);
     const [filters, setFilters] = useState({});
     const [isFilterVisible, setIsFilterVisible] = useState(false);
+     const { showConfirmation } = useConfirmationModal();
+
     const animation = useState(new Animated.Value(0))[0];
     const rotation = useState(new Animated.Value(0))[0];
+
+    useFocusEffect(
+        useCallback(()=>{
+            return( 
+                setFilters({})
+            )
+        },[navigation])
+    )
 
     const allLeaves = allUsers.flatMap(user =>{
         if (user.role === generalConst.MANAGER) return []; 
@@ -46,19 +60,31 @@ const ApproveLeave = () => {
             } else if (normalizedTo) {
             matchesDates = normalizedLeaveEnd <= normalizedTo;
             }
-        const matchesStatus = !filters.status || leave.status === filters.status;
-        const matchesType = !filters.type || leave.type === filters.type;
+        const matchesStatus = !filters?.status || leave.status === filters?.status;
+        const matchesType = !filters?.type || leave.type === filters?.type;
         
         return matchesDates && matchesStatus && matchesType;
     
     });
 
-    const handleApprove = (leaveId) => {
-        dispatch(approveLeave({ leaveId, managerId: currentUser.id }));
+    const handleApprove = async(leaveId) => {
+        const confirmed = await showConfirmation(
+            'Confirm Approval',
+            `Are you sure you want to Approve this Request?`
+        );
+        if(confirmed){
+            dispatch(approveLeave({ leaveId, managerId: currentUser.id }));
+        }
     };
 
-    const handleReject = (leaveId) => {
-        dispatch(rejectLeave({ leaveId, managerId: currentUser.id }));
+    const handleReject = async(leaveId) => {
+        const confirmed = await showConfirmation(
+            'Confirm Rejection',
+            `Are you sure you want to Reject this Request?`
+        );
+        if(confirmed){
+            dispatch(rejectLeave({ leaveId, managerId: currentUser.id }));
+        }
     };
 
     const toggleFilter = () => {
@@ -87,10 +113,31 @@ const ApproveLeave = () => {
         outputRange: ['0deg', '180deg']
     });
 
+    const handleApproveDelete = async(leaveId, userId) => {
+        const confirmed = await showConfirmation(
+            'Confirm Approval',
+            `Are you sure you want to Approve this Request?`
+        );
+        if(confirmed){
+            dispatch(approveDeleteLeave({leaveId, userId }))
+        }
+    }
+
+    const handleRejectDelete = async( leaveId, userId ) => {
+        const confirmed = await showConfirmation(
+            'Confirm Rejection',
+            `Are you sure you want to Reject this Request?`
+        );
+        if(confirmed){
+        dispatch(rejectDeleteLeave({leaveId, userId}))
+        }
+    }
   return (
-    <View style={{ flex: 1 }}>
+    <>
+    <CustomHeader title={screenLabel.APPROVE_LEAVE_LABEL} />
+    <View style={{ flex: 1, backgroundColor:COLORS.background }}>
         <View style={styles.header}>
-            <Text style={styles.title}>{screenLabel.APPROVE_LEAVE_LABEL}</Text>
+            {/* <Text style={styles.title}>{screenLabel.APPROVE_LEAVE_LABEL}</Text> */}
             <TouchableOpacity onPress={toggleFilter}>
                 <Animated.View style={{ transform: [{ rotate }] }}>
                     <Image source={DropDownIcon} style={styles.filterLogo}/>
@@ -118,19 +165,24 @@ const ApproveLeave = () => {
                 isManager={currentUser.role === generalConst.MANAGER} 
                 onApprove={handleApprove}
                 onReject={handleReject} 
+                onApproveDelete={handleApproveDelete}
+                onRejectDelete={handleRejectDelete}
             />}
             keyExtractor={(item) => item.id}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
         />
   </View>
+  </>
   );
 };
 
 
 const styles = StyleSheet.create({
     container: {
-      padding: 16,
-      paddingBottom: 32,
+    //   padding: 16,
+    //   paddingBottom: 32,
+        paddingBottom: 0,
+
     },
     filterContainer: {
         position: 'absolute',

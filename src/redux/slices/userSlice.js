@@ -1,10 +1,33 @@
 
 
-import { nonDeductibleTypes } from '@appHooks/appHook';
+import { calculateDays, nonDeductibleTypes } from '@appHooks/appHook';
 import { generalConst } from '@constants/appConstant';
 import { createSlice } from '@reduxjs/toolkit';
-import { isWeekend, parseISO, eachDayOfInterval,} from 'date-fns';
+import { parseISO } from 'date-fns';
 
+const updateUserInState = (state, userId, updater) => {
+    const updatedAllUsers = state.allUsers.map(user => 
+      user.id === userId ? updater(user) : user
+    );
+  
+    return {
+      ...state,
+      allUsers: updatedAllUsers,
+      currentUser: state.currentUser?.id === userId 
+        ? updater(state.currentUser)
+        : state.currentUser
+    };
+};
+  
+const safelyParseISO = dateString => {
+    try {
+      return parseISO(dateString);
+    } catch {
+      return new Date();
+    }
+};
+
+  
 const initialState = {
   currentUser: null,
   allUsers: []
@@ -34,95 +57,209 @@ const userSlice = createSlice({
           logedIn: true,
           leaveApplied: []
         };
-        state.allUsers.push(newUser);
-        state.currentUser = newUser;
+        return {
+            ...state,
+            allUsers: [...state.allUsers, newUser],
+            currentUser: newUser
+          };
       } else {
-        state.currentUser = existingUser;
+        return { ...state, currentUser: existingUser };
       }
     },
-    signOutUser: (state) => {
-      state.currentUser = null;
-    },
+    signOutUser: (state) => ({
+        ...state,
+        currentUser: null
+    }),
     applyForLeave: (state, action) => {
         const { leaveDetails } = action.payload;
-        
-        if (state.currentUser) {
-          const newLeave = {
+        if (!state.currentUser) return state;
+
+        const newLeave = {
             id: Date.now().toString(),
             ...leaveDetails,
             ...(state.currentUser.role === generalConst.MANAGER && {
               approvedBy: state.currentUser.id,
               approvalDate: new Date().toISOString()
             })
-          };
-          if (!nonDeductibleTypes.includes(newLeave.type)) {
-            const start = parseISO(newLeave.startDate);
-            const end = parseISO(newLeave.endDate);
-            const allDays = eachDayOfInterval({ start, end });
-            const weekdays = allDays.filter(d => !isWeekend(d)).length;
+        };
+        return updateUserInState(state, state.currentUser.id, user => {
+            const updatedUser = { ...user };
             
-            state.currentUser.remainingLeaves = Math.max(
-              0, 
-              state.currentUser.remainingLeaves - weekdays
-            );
-        }
-      
-          state.currentUser.leaveApplied.push(newLeave);
-        
-          const userIndex = state.allUsers.findIndex(
-            user => user.id === state.currentUser.id
-          );
-          if (userIndex !== -1) {
-            state.allUsers[userIndex].leaveApplied.push(newLeave);
-            state.allUsers[userIndex].remainingLeaves = state.currentUser.remainingLeaves;
-          }
-        }
+            if (!nonDeductibleTypes.includes(newLeave.type)) {
+              const start = safelyParseISO(newLeave.startDate);
+              const end = safelyParseISO(newLeave.endDate);
+              updatedUser.remainingLeaves -= calculateDays(start, end);
+            }
+    
+            return {
+              ...updatedUser,
+              leaveApplied: [...updatedUser.leaveApplied, newLeave]
+            };
+        });
     },
     approveLeave: (state, action) => {
         const { leaveId, managerId } = action.payload;
         
-        state.allUsers.forEach(user => {
-          if (user.role !== generalConst.MANAGER) {
+        return {
+          ...state,
+          allUsers: state.allUsers.map(user => {
+            if (user.role === generalConst.MANAGER) return user;
+            
             const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
-            if (leaveIndex !== -1) {
-              const leave = user.leaveApplied[leaveIndex];
-              leave.status = generalConst.APPROVED;
-              leave.approvedBy = managerId;
-              leave.approvalDate = new Date().toISOString();
-            }
-          }
-        });
+            if (leaveIndex === -1) return user;
+  
+            const updatedLeaves = [...user.leaveApplied];
+            updatedLeaves[leaveIndex] = {
+              ...updatedLeaves[leaveIndex],
+              status: generalConst.APPROVED,
+              approvedBy: managerId,
+              approvalDate: new Date().toISOString()
+            };
+  
+            return {
+              ...user,
+              leaveApplied: updatedLeaves
+            };
+          })
+        };
     },
     rejectLeave: (state, action) => {
         const { leaveId, managerId } = action.payload;
-        state.allUsers.forEach(user => {
-          if (user.role !== generalConst.MANAGER) {
+        
+        return {
+          ...state,
+          allUsers: state.allUsers.map(user => {
+            if (user.role === generalConst.MANAGER) return user;
+            
             const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
-            if (leaveIndex !== -1) {
-                const leave = user.leaveApplied[leaveIndex];
-
-                if (!nonDeductibleTypes.includes(leave.type)) {
-                    const start = parseISO(leave.startDate);
-                    const end = parseISO(leave.endDate);
-                    const allDays = eachDayOfInterval({ start, end });
-                    const weekdays = allDays.filter(d => !isWeekend(d)).length;
-                
-                    user.remainingLeaves = Math.min(
-                    user.totalLeaves, 
-                    user.remainingLeaves + weekdays
-                    );
-                }
-                leave.status = generalConst.REJECTED;
-                leave.rejectedBy = managerId;
-                leave.rejectionDate = new Date().toISOString();
+            if (leaveIndex === -1) return user;
+  
+            const leave = user.leaveApplied[leaveIndex];
+            const updatedUser = { ...user };
+  
+            if (!nonDeductibleTypes.includes(leave.type)) {
+              const start = safelyParseISO(leave.startDate);
+              const end = safelyParseISO(leave.endDate);
+              const daysToRevert = calculateDays(start, end);
+              
+              updatedUser.remainingLeaves = Math.min(
+                updatedUser.totalLeaves,
+                updatedUser.remainingLeaves + daysToRevert
+              );
             }
-        }
+  
+            return {
+              ...updatedUser,
+              leaveApplied: updatedUser.leaveApplied.map((leave, idx) => 
+                idx === leaveIndex ? {
+                  ...leave,
+                  status: generalConst.REJECTED,
+                  rejectedBy: managerId,
+                  rejectionDate: new Date().toISOString()
+                } : leave
+              )
+            };
+          })
+        };
+    },
+    deleteLeave: (state, action) => {
+        const { leaveId, userId } = action.payload;
+        return updateUserInState(state, userId, user => {
+          const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
+          if (leaveIndex === -1) return user;
+  
+          const leave = user.leaveApplied[leaveIndex];
+          const updatedUser = { ...user };
+  
+          if (!nonDeductibleTypes.includes(leave.type)) {
+            const start = safelyParseISO(leave.startDate);
+            const end = safelyParseISO(leave.endDate);
+            const daysToRevert = calculateDays(start, end);
+            
+            updatedUser.remainingLeaves = Math.min(
+              updatedUser.totalLeaves,
+              updatedUser.remainingLeaves + daysToRevert
+            );
+          }
+  
+          return {
+            ...updatedUser,
+            leaveApplied: updatedUser.leaveApplied.filter(
+              (_, idx) => idx !== leaveIndex
+            )
+          };
+        });
+    },
+    requestDeleteLeave: (state, action) => {
+        const { leaveId, userId } = action.payload;
+        return updateUserInState(state, userId, user => {
+          const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
+          if (leaveIndex === -1) return user;
+  
+          const updatedLeaves = [...user.leaveApplied];
+          updatedLeaves[leaveIndex] = {
+            ...updatedLeaves[leaveIndex],
+            deleteRequested: true,
+            deleteStatus: generalConst.PENDING
+          };
+  
+          return {
+            ...user,
+            leaveApplied: updatedLeaves
+          };
+        });
+    },
+    approveDeleteLeave: (state, action) => {
+        const { leaveId, userId } = action.payload;
+        return updateUserInState(state, userId, user => {
+          const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
+          if (leaveIndex === -1) return user;
+  
+          const leave = user.leaveApplied[leaveIndex];
+          const updatedUser = { ...user };
+  
+          if (!nonDeductibleTypes.includes(leave.type) && leave.status === generalConst.APPROVED) {
+            const start = safelyParseISO(leave.startDate);
+            const end = safelyParseISO(leave.endDate);
+            const daysToRevert = calculateDays(start, end);
+            
+            updatedUser.remainingLeaves = Math.min(
+              updatedUser.totalLeaves,
+              updatedUser.remainingLeaves + daysToRevert
+            );
+          }
+  
+          return {
+            ...updatedUser,
+            leaveApplied: updatedUser.leaveApplied.filter(
+              (_, idx) => idx !== leaveIndex
+            )
+          };
+        });
+    },
+    rejectDeleteLeave: (state, action) => {
+        const { leaveId, userId } = action.payload;
+        return updateUserInState(state, userId, user => {
+          const leaveIndex = user.leaveApplied.findIndex(leave => leave.id === leaveId);
+          if (leaveIndex === -1) return user;
+  
+          const updatedLeaves = [...user.leaveApplied];
+          updatedLeaves[leaveIndex] = {
+            ...updatedLeaves[leaveIndex],
+            deleteRequested: false,
+            deleteStatus: generalConst.REJECTED
+          };
+  
+          return {
+            ...user,
+            leaveApplied: updatedLeaves
+          };
         });
     },
   }
 });
 
-export const { signInUser, signOutUser, applyForLeave, approveLeave, rejectLeave } = userSlice.actions;
+export const { signInUser, signOutUser, applyForLeave, approveLeave, rejectLeave, deleteLeave, requestDeleteLeave, approveDeleteLeave, rejectDeleteLeave} = userSlice.actions;
 export const selectCurrentUser = (state) => state.users.currentUser;
 export const selectAllUsers = (state) => state.users.allUsers;
 export default userSlice.reducer;

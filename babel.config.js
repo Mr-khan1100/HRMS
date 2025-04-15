@@ -14,6 +14,7 @@ module.exports = {
           '@sharedComponents': './src/sharedComponents',
           '@styles': './src/styles',
           '@constants': './src/constants',
+          // '@contexts': './src/contexts',
         },
       },
     ],

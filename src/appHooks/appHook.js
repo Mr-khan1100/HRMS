@@ -1,5 +1,5 @@
 import { generalConst } from '@constants/appConstant';
-import { parseISO} from 'date-fns';
+import { differenceInDays, eachDayOfInterval, getDay, isWeekend, parseISO} from 'date-fns';
 import { Alert } from 'react-native';
 
 const isSameMonth = (date1, date2) => {
@@ -42,4 +42,13 @@ export const Alerts = (header, message) =>{
         ],
         { cancelable: true }
     );
+};
+
+export const calculateDays = (start, end) => {
+    const isFridayToMonday = (
+      getDay(start) === 5 &&
+      getDay(end) === 1 &&
+      differenceInDays(end, start) === 3
+    );
+    return isFridayToMonday ? 4 : eachDayOfInterval({ start, end }).filter(d => !isWeekend(d)).length;
 };

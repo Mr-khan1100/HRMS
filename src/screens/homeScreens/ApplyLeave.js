@@ -3,7 +3,7 @@ import { View, Text, Button, TextInput, Alert, StyleSheet, Keyboard } from 'reac
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { applyForLeave } from '@redux/slices/userSlice';
-import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay, isSameDay, startOfDay} from 'date-fns';
+import { isWeekend, parseISO, differenceInDays, eachDayOfInterval, isBefore,isAfter , getDay, isSameDay, startOfDay, isEqual, addDays} from 'date-fns';
 import Calender from '@assets/images/date_input.png';
 import DropDownIcon from '@assets/images/DropDownIcon.png'
 import InputFields from '@sharedComponents/InputFields';
@@ -13,6 +13,8 @@ import { Alerts, formatDate, hasExistingWFHThisMonth, typeOptions } from '@appHo
 import { COLORS } from '@styles/theme';
 import { generalConst, keyboardType, labelConstants, placeholder, screenLabel, validationMessage } from '@constants/appConstant';
 import { BlueButton } from '@sharedComponents/BlueButton';
+import { useConfirmationModal } from '../../contexts/ConfirmationModalContext';
+import CustomHeader from '@sharedComponents/CustomHeader';
 
 const ApplyLeave = ({navigation}) => {
     const dispatch = useDispatch();
@@ -22,7 +24,10 @@ const ApplyLeave = ({navigation}) => {
     const [showEndPicker, setShowEndPicker] = useState(false);
     const [typeVisible, setTypeVisible] = useState(false);
     const [error, setError] = useState({startDate:null, endDate:null, reason:null, type:null});
+
+    const { showConfirmation } = useConfirmationModal();
     const today = new Date();
+    const startOfyear = new Date(today.getFullYear(), 0, 1);
     const endOfYear = new Date(today.getFullYear(), 11, 31);
 
     const totalLeaves = currentUser?.totalLeaves || 12;
@@ -40,49 +45,55 @@ const ApplyLeave = ({navigation}) => {
 
 
     useEffect(() => {
-        if(value.type){
-            if (value.type === generalConst.WFH && value.startDate && value.endDate) {
-                if (!isSameDay(value.startDate, value.endDate)) {
-                  setValue(prev => ({...prev, endDate:value.startDate}))
-                }
-                
-            }
-            validateEndDate(value.startDate);
-        }
-      }, [value.type]);
+        const validateDates = () => {
+            if (value.startDate) validateStartDate(value.startDate);
+            if (value.endDate) validateEndDate(value.endDate);
+        };
+        
+        validateDates();
+    }, [value.type, value.startDate, value.endDate]);
 
     const validateNoOverlap = (start, end) => {
-    const existingLeaves = currentUser?.leaveApplied?.filter(leave => 
-        leave.status !== 'rejected'
-    ) || [];
-    
-    return !existingLeaves.some(leave => {
-        const existingStart = parseISO(leave.startDate);
-        const existingEnd = parseISO(leave.endDate);
+        const existingLeaves = currentUser?.leaveApplied?.filter(leave => 
+            leave.status !== 'rejected'
+        ) || [];
+        
+        return !existingLeaves.some(leave => {
+            const existingStart = parseISO(leave.startDate);
+            const existingEnd = parseISO(leave.endDate);
 
-        const normalizedLeaveStart = startOfDay(existingStart);
-        const normalizedLeaveEnd = startOfDay(existingEnd);
-        const normalizedFrom = startOfDay(start);
-        const normalizedTo = startOfDay(end);
+            const normalizedLeaveStart = startOfDay(existingStart);
+            const normalizedLeaveEnd = startOfDay(existingEnd);
+            const normalizedFrom = startOfDay(start);
+            const normalizedTo = startOfDay(end);
 
-        return normalizedFrom <= normalizedLeaveEnd && normalizedTo >= normalizedLeaveStart;
-    });
+            return normalizedFrom <= normalizedLeaveEnd && normalizedTo >= normalizedLeaveStart;
+        });
     };
+
 
 
     const validateStartDate = (date) => {
         let errorMessage = null;
-        
-        console.log(isWeekend(date), generalConst.DATE)
+        // console.log(isWeekend(date), generalConst.DATE)
         if (isWeekend(date)) {
             
           errorMessage = validationMessage.START_DATE_CANNOT_WEEKEND;
         }
         
+        if (value.type === generalConst.SL && isAfter(date, today)) {
+            errorMessage = 'Sick leave must be for past or present dates.';
+        }
         if (value.endDate && isAfter(date, value.endDate)) {
           errorMessage = validationMessage.START_DATE_BEFORE_END_DATE;
         }
-      
+        if(value.type === generalConst.WFH){
+            const dayOfWeek = getDay(date);
+            const isValidDay = dayOfWeek === 1 || dayOfWeek === 5;
+            if(!isValidDay){
+                errorMessage = 'WFH can only be applied on Monday or Friday';
+            }
+        } 
         setError(prev => ({ ...prev, startDate: errorMessage }));
         return !errorMessage;
     };
@@ -92,40 +103,34 @@ const ApplyLeave = ({navigation}) => {
         
         if (isWeekend(date)) {
             errorMessage = validationMessage.END_DATE_CANNOT_WEEKEND;
-        } else if (value.startDate) {
-          if (isBefore(date, value.startDate)) {
+        } 
+        else if (value.type === generalConst.SL && isAfter(date, today)) {
+            errorMessage = 'Sick leave must be for past or present dates.';
+        }else if (value.startDate) {
+            if (isBefore(date, value.startDate)) {
+                errorMessage = validationMessage.END_DATE_AFTER_START_DATE;
+            }
             
-            errorMessage = validationMessage.END_DATE_AFTER_START_DATE;
-          }
-          else if (value.type === generalConst.WFH) {
-            if (differenceInDays(date, value.startDate) !== 0) {
-              errorMessage = validationMessage.ONLY_ONE_WFH;
+            else if(value.type === generalConst.WFH){
+                const startDay = getDay(value.startDate);
+                const endDay = getDay(date);
+                const dayDifference = differenceInDays(date, value.startDate);
+                const dayOfWeek = getDay(date);
+                if (isEqual(value.startDate, date)) {
+                    if (!(startDay === 1 || startDay === 5)) {
+                      errorMessage = 'WFH must be on Monday or Friday';
+                    }
+                }
+                else {
+                    const isValidRange = 
+                      startDay === 5 && 
+                      endDay === 1 && 
+                      dayDifference === 3;
+                    if (!isValidRange) {
+                      errorMessage = 'WFH range can be Friday to Monday (4 consecutive days)';
+                    }
+                }
             }
-            if (hasExistingWFHThisMonth(currentUser)) {
-              errorMessage = validationMessage.WFH_APPLIED_THIS_MONTH;
-            }
-          }
-          
-          else if (
-            getDay(value.startDate) === 5 && 
-            getDay(date) === 1 && 
-            differenceInDays(date, value.startDate) === 3
-          ) {
-            errorMessage = validationMessage.SANDWHICH_RULE;
-          }
-  
-          else {
-            const allDays = eachDayOfInterval({ 
-              start: value.startDate, 
-              end: date 
-            });
-            const workingDays = allDays.filter(d => !isWeekend(d)).length;
-            if (workingDays > remainingLeaves) {
-              errorMessage = `Exceeds remaining ${remainingLeaves} ${
-                remainingLeaves === 1 ? 'day' : 'days'
-              }`;
-            }
-          }
         }
         setError(prev => ({ ...prev, endDate: errorMessage }));
         return !errorMessage;
@@ -153,18 +158,11 @@ const ApplyLeave = ({navigation}) => {
     const handleDateConfirm = (Datetype, date) => {
         if (Datetype === generalConst.START) {
             setValue(prev => ({...prev, startDate:date, endDate:null}))
-            if (value.type === generalConst.WFH) {
-            
-                setValue(prev => ({...prev, endDate:date}))
-
-              }
             validateStartDate(date);
             setShowStartPicker(false)
         } else {
-            const finalDate = value.type === generalConst.WFH ? value.startDate : date;
-          
-            setValue(prev => ({...prev, endDate:finalDate}))
-            validateEndDate(finalDate);
+            setValue(prev => ({...prev, endDate:date}))
+            validateEndDate(date);
             setShowEndPicker(false);
         }
     };
@@ -194,7 +192,7 @@ const ApplyLeave = ({navigation}) => {
     };
 
     
-    const handleApply = () => {
+    const handleApply = async() => {
         Keyboard.dismiss();
         if (validateForm()) {
             
@@ -216,17 +214,35 @@ const ApplyLeave = ({navigation}) => {
             leaveDetails.approvedBy = currentUser.id;
             leaveDetails.approvalDate = new Date().toISOString();
             }
-            dispatch(applyForLeave({leaveDetails}));
-            setValue({startDate:null, endDate:null, type:null, reason:null})
-            Alerts(generalConst.SUCCESS,  `Leave ${isManager ? 'Approved' : 'Applied'} Successfully`)
+            const confirmed = await showConfirmation(
+                'Confirm Leave Application',
+                `Are you sure you want to apply leave from ${formatDate(value.startDate)}  to  ${formatDate(value.endDate)}?`
+              );
+              console.log(confirmed, 'confirmed')
+            if(confirmed){
+                dispatch(applyForLeave({leaveDetails}));
+                setValue({startDate:null, endDate:null, type:null, reason:null})
+                Alerts(generalConst.SUCCESS,  `Leave ${isManager ? 'Approved' : 'Applied'} Successfully`)
+            }
+
         }else{
             Alerts(generalConst.FAILED, validationMessage.ENTER_ALL_FIELDS)
         }
     };
 
+    const getMaxDate = () => {
+        if (value.type === generalConst.WFH && value.startDate) {
+          // For WFH ranges, limit end date to 3 days after start
+          return addDays(value.startDate, 3);
+        }
+        return endOfYear;
+      };
+
   return (
+    <>
+    <CustomHeader  title={screenLabel.APPLY_LEAVE_LABEL}/>
     <View style={styles.container}>
-        <Text style={styles.title}>{screenLabel.APPLY_LEAVE_LABEL}</Text>
+        {/* <Text style={styles.title}>{screenLabel.APPLY_LEAVE_LABEL}</Text> */}
         <Text style={styles.remainingTexr}>
             Remaining Leaves: {remainingLeaves}/{totalLeaves}
         </Text>
@@ -286,7 +302,7 @@ const ApplyLeave = ({navigation}) => {
         <DateTimePickerModal
             isVisible={showStartPicker}
             mode={generalConst.DATE}
-            minimumDate={today}
+            minimumDate={startOfyear}
             maximumDate={endOfYear}
             onConfirm={date => handleDateConfirm(generalConst.START, date)}
             onCancel={() => handleCancel(generalConst.START)}
@@ -295,8 +311,8 @@ const ApplyLeave = ({navigation}) => {
         <DateTimePickerModal
             isVisible={showEndPicker}
             mode={generalConst.DATE}
-            minimumDate={today}
-            maximumDate={endOfYear}
+            minimumDate={value.startDate || startOfyear}
+            maximumDate={getMaxDate()}
             onConfirm={date => handleDateConfirm(generalConst.END, date)}
             onCancel={() => handleCancel(generalConst.END)}
         />
@@ -315,6 +331,7 @@ const ApplyLeave = ({navigation}) => {
             disabled={!value.startDate || !value.endDate || !value.reason || !value.type}
         />
     </View>
+    </>
   );
 };
 
@@ -322,7 +339,9 @@ export default ApplyLeave;
 
 const styles = StyleSheet.create({
     container:{
+        flex:1,
         padding: 20,
+        backgroundColor:COLORS.background,
     },
     title: {
         fontSize: 24,

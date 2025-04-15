@@ -7,12 +7,14 @@ import HomeStack from './HomeStack';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '@redux/slices/userSlice';
 import { screenLabel } from '@constants/appConstant';
+import { ConfirmationModalProvider } from '../contexts/ConfirmationModalContext';
 
 const AppNavigator = () => {
     const Stack = createNativeStackNavigator();
     const currentUser = useSelector(selectCurrentUser);
     
   return (
+    <ConfirmationModalProvider>
         <NavigationContainer>
             <Stack.Navigator
                 screenOptions={{
@@ -32,6 +34,7 @@ const AppNavigator = () => {
                     />
             </Stack.Navigator>
         </NavigationContainer>
+    // </ConfirmationModalProvider>
   )
 }
 
